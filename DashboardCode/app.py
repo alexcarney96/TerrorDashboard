@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.io as pio
 from dash_bootstrap_templates import load_figure_template
 
+
 ###### Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY, dbc_css])
@@ -17,17 +18,25 @@ load_figure_template(template)
 df = pd.read_parquet("gtd_clean_dataset_pqt.parquet")
 df.set_index('Group', inplace=True)
 
-'''
-data = {
-    'Group': ['A', 'B', 'A', 'B'],
-    'NVictimsKilled': [10, 15, 8, 12],
-    'NVictimsWounded': [5, 10, 4, 8],
-    'Country': ['USA', 'Canada', 'Mexico', 'USA']
-}
-df = pd.DataFrame(data)
-df.set_index('Group', inplace=True)
-'''
 
+###### Page definitions
+class OverviewPageMaker():
+    def __init__(self,df):
+        self.df = df.copy()
+    
+    def __update(self,filtered_df):
+        self.df = filtered_df.copy()
+    
+    def __build_get_figure_layout(self):
+        pass
+
+    def update_get_figure_layout(self,filtered_df):
+        self.__update(filtered_df)
+        return self.__build_get_figure_layout()
+    
+###### Initialize pages
+overview = OverviewPageMaker(df)
+print(overview.df)
 
 ######## Build the Navbar
 navbar = dbc.NavbarSimple(
