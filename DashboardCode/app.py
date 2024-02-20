@@ -8,37 +8,63 @@ import plotly.io as pio
 from dash_bootstrap_templates import load_figure_template
 
 
-###### Build our app  
+######################################################################################## Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY, dbc_css])
 template = "darkly"
 load_figure_template(template)
 
-###### Loading data and making Group index for performance                   
+############################################################################# Loading data and making Group index for performance                   
 df = pd.read_parquet("gtd_clean_dataset_pqt.parquet")
 df.set_index('Group', inplace=True)
 
 
-###### Page definitions
-class OverviewPageMaker():
-    def __init__(self,df):
+######################################################################################## Page definitions
+class Page():
+    def __init__(self,df,template):
         self.df = df.copy()
-    
-    def __update(self,filtered_df):
-        self.df = filtered_df.copy()
-    
-    def __build_get_figure_layout(self):
-        pass
+        self.template = template
 
-    def update_get_figure_layout(self,filtered_df):
-        self.__update(filtered_df)
-        return self.__build_get_figure_layout()
-    
-###### Initialize pages
-overview = OverviewPageMaker(df)
-print(overview.df)
+    def update(self,new_df):
+        self.df = new_df.copy()
 
-######## Build the Navbar
+    def build_get_figure_layout(self): #overide me
+        return None
+    
+    def update_get_figure_layout(self,new_df):
+        self.update(new_df)
+        return self.build_get_figure_layout()
+    
+class OverviewPageMaker(Page):
+    def __init__(self,df,template):
+        super().__init__(df, template)
+    
+    def build_get_figure_layout(self):
+        return [
+            dbc.Row([
+                dbc.Col(html.Div("Hello sailor. this is alex speaking")),
+                dbc.Col(dcc.Graph(figure=self.Fig1Test())),
+                dbc.Col(dcc.Graph(figure=self.Fig2Test())),
+            ])
+        ]
+    
+    def Fig1Test(self):
+        fig = px.bar(self.df, x='Country', 
+                      y='NVictimsKilled', 
+                      title='Group Overview - Value1',template=self.template)
+        return fig
+
+    def Fig2Test(self):
+        fig = px.bar(self.df, x='Country', 
+                      y='NVictimsWounded', 
+                      title='Group Overview - Value2',template=self.template)
+        return fig
+
+ 
+#################################################################################### Initialize page objects
+overview = OverviewPageMaker(df,template)
+
+##################################################################################### Build the Navbar
 navbar = dbc.NavbarSimple(
     children=[
         dcc.Dropdown(
@@ -47,21 +73,21 @@ navbar = dbc.NavbarSimple(
             value=df.index.unique()[0],  # Default to the first value
             style={'width': '400px'}
         ),
-        dbc.NavItem(dbc.NavLink("Group Overview", href="/page1", active=True, id='page1-link')),
-        dbc.NavItem(dbc.NavLink("Attack Methodology", href="/page2", active=False, id='page2-link')),
-        dbc.NavItem(dbc.NavLink("Geographical", href="/page3", active=False, id='page3-link')),
+        dbc.NavItem(dbc.NavLink("Group Overview", href="/overview", active=True, id='overview-link')),
+        dbc.NavItem(dbc.NavLink("Attack Methodology", href="/attackmethod", active=False, id='attackmethod-link')),
+        dbc.NavItem(dbc.NavLink("Geographical", href="/geo", active=False, id='geo-link')),
     ],
     brand="Global Terrorism Perpetrators",
-    brand_href="/page1",
+    brand_href="/overview",
     color="dark",
     dark=True,
     style={'borderBottom': '1px solid white'}  # Add a border to the bottom of the navbar
 )
 
-########## Page layout
+######################################################################################## Page layout
 app.layout = dbc.Container(
     [
-        dcc.Location(id='url', refresh=False, pathname='/page1'),  # Set default page to "/page1"
+        dcc.Location(id='url', refresh=False, pathname='/overview'),  # Set default page to "/page1"
         navbar,
         html.Div(id='page-content')
     ],
@@ -69,7 +95,7 @@ app.layout = dbc.Container(
     className="dbc"
 )
 
-################ Callback to update page content based on URL and dropdown value
+########################################### Callback to update page content based on URL and dropdown value
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname'),
                Input('group-dropdown', 'value')])
@@ -79,41 +105,31 @@ def update_page_content(pathname, selected_group):
 
     filtered_df = df[df.index == selected_group]
 
-    if pathname == '/page1':
+    if pathname == '/overview':
         # Page 1 content
-        fig1 = px.bar(filtered_df, x='Country', y='NVictimsKilled', title='Group Overview - Value1',template=template)
-        fig2 = px.bar(filtered_df, x='Country', y='NVictimsWounded', title='Group Overview - Value2',template=template)
-        
-        return [
-            dbc.Row([
-                dbc.Col(html.Div("Hello sailor. this is alex speaking")),
-                dbc.Col(dcc.Graph(figure=fig1)),
-                dbc.Col(dcc.Graph(figure=fig2)),
-            ])
-        ]
-        #return [dcc.Graph(figure=fig1), dcc.Graph(figure=fig2)]
+        return overview.update_get_figure_layout(filtered_df)
 
-    elif pathname == '/page2':
+    elif pathname == '/attackmethod':
         # Page 2 content
         fig3 = px.pie(filtered_df, names='Country', values='NVictimsKilled', title='Attack Methodology - Value1',template=template)
         fig4 = px.pie(filtered_df, names='Country', values='NVictimsWounded', title='Attack Methodology - Value2')
         return [dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
 
-    elif pathname == '/page3':
+    elif pathname == '/geo':
         # Page 3 content
         fig5 = px.scatter_geo(filtered_df, locations='Country', size='NVictimsKilled', title='Geographical - Value1')
         fig6 = px.scatter_geo(filtered_df, locations='Country', size='NVictimsWounded', title='Geographical - Value2')
         return [dcc.Graph(figure=fig5), dcc.Graph(figure=fig6)]
 
-################ Callback to update active state of NavLinks and highlight them
+############################################ Callback to update active state of NavLinks and highlight them
 @app.callback(
-    [Output('page1-link', 'active'),
-     Output('page2-link', 'active'),
-     Output('page3-link', 'active')],
+    [Output('overview-link', 'active'),
+     Output('attackmethod-link', 'active'),
+     Output('geo-link', 'active')],
     [Input('url', 'pathname')]
 )
 def update_active_links(pathname):
-    return pathname == '/page1', pathname == '/page2', pathname == '/page3'
+    return pathname == '/overview', pathname == '/attackmethod', pathname == '/geo'
 
 
 if __name__ == '__main__':
