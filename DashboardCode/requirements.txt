@@ -1,0 +1,5 @@
+pandas
+dash
+dash-bootstrap-components
+pyarrow
+dash-bootstrap-templates
