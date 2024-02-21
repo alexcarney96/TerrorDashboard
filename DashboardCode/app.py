@@ -15,62 +15,40 @@ template = "darkly"
 load_figure_template(template)
 
 ############################################################################# Loading data and making Group index for performance                   
-df = pd.read_parquet("gtd_clean_dataset_pqt.parquet")
-df.set_index('Group', inplace=True)
+raw_df = pd.read_parquet("gtd_clean_dataset_pqt.parquet")
+raw_df.set_index('Group', inplace=True)
 
+#################################################################################### build overview
+def ov_Fig1Test(df,template):
+    fig = px.bar(df, x='Country', 
+                    y='NVictimsKilled', 
+                    title='Group Overview - Value1',template=template)
+    return fig    
 
-######################################################################################## Page definitions
-class Page():
-    def __init__(self,df,template):
-        self.df = df.copy()
-        self.template = template
+def ov_Fig2Test(df,template):
+    fig = px.bar(df, x='Country', 
+                    y='NVictimsWounded', 
+                    title='Group Overview - Value2',template=template)
+    return fig  
 
-    def update(self,new_df):
-        self.df = new_df.copy()
-
-    def build_get_figure_layout(self): #overide me
-        return None
-    
-    def update_get_figure_layout(self,new_df):
-        self.update(new_df)
-        return self.build_get_figure_layout()
-    
-class OverviewPageMaker(Page):
-    def __init__(self,df,template):
-        super().__init__(df, template)
-    
-    def build_get_figure_layout(self):
-        return [
-            dbc.Row([
-                dbc.Col(html.Div("Hello sailor. this is alex speaking")),
-                dbc.Col(dcc.Graph(figure=self.Fig1Test())),
-                dbc.Col(dcc.Graph(figure=self.Fig2Test())),
-            ])
-        ]
-    
-    def Fig1Test(self):
-        fig = px.bar(self.df, x='Country', 
-                      y='NVictimsKilled', 
-                      title='Group Overview - Value1',template=self.template)
-        return fig
-
-    def Fig2Test(self):
-        fig = px.bar(self.df, x='Country', 
-                      y='NVictimsWounded', 
-                      title='Group Overview - Value2',template=self.template)
-        return fig
-
- 
-#################################################################################### Initialize page objects
-overview = OverviewPageMaker(df,template)
+def BuildGetOverviewLayout(filtered_df,template):
+    fig1 = ov_Fig1Test(filtered_df,template)
+    fig2 = ov_Fig2Test(filtered_df,template)
+    return [
+        dbc.Row([
+            dbc.Col(html.Div("Hello sailor. this is alex speaking")),
+            dbc.Col(dcc.Graph(figure=fig1)),
+            dbc.Col(dcc.Graph(figure=fig2)),
+        ])
+    ]
 
 ##################################################################################### Build the Navbar
 navbar = dbc.NavbarSimple(
     children=[
         dcc.Dropdown(
             id='group-dropdown',
-            options=[{'label': group, 'value': group} for group in df.index.unique()],
-            value=df.index.unique()[0],  # Default to the first value
+            options=[{'label': group, 'value': group} for group in raw_df.index.unique()],
+            value=raw_df.index.unique()[0],  # Default to the first value
             style={'width': '400px'}
         ),
         dbc.NavItem(dbc.NavLink("Group Overview", href="/overview", active=True, id='overview-link')),
@@ -102,12 +80,13 @@ app.layout = dbc.Container(
 def update_page_content(pathname, selected_group):
     if selected_group == 'ALL':
         selected_group = None
-
-    filtered_df = df[df.index == selected_group]
+    filtered_df = raw_df[raw_df.index == selected_group]
 
     if pathname == '/overview':
         # Page 1 content
-        return overview.update_get_figure_layout(filtered_df)
+        #return overview.update_get_figure_layout(filtered_df)
+        #ov_Fig1Test(filtered_df,template)
+        return BuildGetOverviewLayout(filtered_df,template)
 
     elif pathname == '/attackmethod':
         # Page 2 content
