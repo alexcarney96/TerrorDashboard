@@ -150,14 +150,14 @@ def line_polar_attack_types(df,template):
 
     grp  = grp[grp['AttackTypeValue'] != 'Unknown']
     # Create the line polar plot
-    fig = px.bar_polar(grp, r="frequency",theta='AttackTypeValue',
-                        color=grp['AttackTypeValue'].unique(),
-                        title = 'Group Attack Profiles',
-                        color_discrete_sequence=px.colors.qualitative.Set1, height=400, template=template
+    fig = px.line_polar(grp, r="frequency",theta='AttackTypeValue',
+                        line_close=True,
+                        
+                        title = 'Attack Method Profile',
+                        color_discrete_sequence = px.colors.sequential.Plasma_r, template=template
                         )
 
-    # Update layout to remove unnecessary elements
-    fig.update_layout(polar=dict(radialaxis=dict(visible=False)), showlegend=False)
+    fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), showlegend=False)
 
     return fig
 
