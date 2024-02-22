@@ -20,7 +20,7 @@ raw_df = pd.read_parquet("gtd_clean_dataset_pqt.parquet")
 raw_df.set_index('Group', inplace=True)
 
 #################################################################################### build overview
-
+ov_ind_margin = 3
 def ov_years_active_indicator(df):
     min_year = df['Year'].min()
     max_year = df['Year'].max()
@@ -34,6 +34,9 @@ def ov_years_active_indicator(df):
         title={"text": "Years Active", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
+    fig.update_layout(
+    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    )
     return fig
 
 def ov_num_attacks_indicator(df):
@@ -45,6 +48,9 @@ def ov_num_attacks_indicator(df):
         title={"text": "Attacks", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
+    fig.update_layout(
+    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    )
     return fig
 
 def ov_victims_wounded_indicator(df):
@@ -56,6 +62,9 @@ def ov_victims_wounded_indicator(df):
         title={"text": "Wounded", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
+    fig.update_layout(
+    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    )
     return fig
 
 def ov_countries_affected_indicator(df):
@@ -67,6 +76,9 @@ def ov_countries_affected_indicator(df):
         title={"text": "Countries Affected", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
+    fig.update_layout(
+    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    )
     return fig
 
 def ov_victims_killed_indicator(df):
@@ -78,6 +90,9 @@ def ov_victims_killed_indicator(df):
         title={"text": "Killed", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
+    fig.update_layout(
+    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    )
     return fig
 
 def ov_stacked_area_chart_casualties(df, template):
@@ -94,7 +109,7 @@ def ov_stacked_area_chart_casualties(df, template):
     
     fig.update_layout(
     showlegend=True,
-    height=400
+    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
     return fig
 
@@ -110,6 +125,9 @@ def ov_stacked_area_chart_casualties2(df, template):
 
     for trace in fig.data:
         trace.name = trace.name.replace("NVictims", "")
+    fig.update_layout(
+    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    )
     '''
     # Add line trace for attacks per year
     fig.add_trace(px.line(df_attacks, x='Year', y='Attacks', labels={'Attacks': 'Number of Attacks'}).data[0])
@@ -126,7 +144,7 @@ def ov_stacked_area_chart_casualties2(df, template):
     )
     '''
     return fig
-
+'''
 def ov_stacked_bar_attacks_by_year(df, template):
     df_grouped = df.groupby(['Year', 'AttackSuccess']).size().reset_index(name='Count')
 
@@ -138,7 +156,7 @@ def ov_stacked_bar_attacks_by_year(df, template):
     fig.update_layout(barmode='stack')
 
     return fig
-
+'''
 def line_polar_attack_types(df,template):
     # Melt the DataFrame
     df_melted = pd.melt(df, value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
@@ -158,7 +176,9 @@ def line_polar_attack_types(df,template):
                         )
 
     fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), showlegend=False)
-
+    fig.update_layout(
+    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    )
     return fig
 
 def ov_attack_success_gauge(df, template):
@@ -176,28 +196,36 @@ def ov_attack_success_gauge(df, template):
             bar=dict(color="red"),
         )
     ))
-
-    fig.update_layout(template=template)
+    fig.update_layout(
+        template=template,
+        margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    )
 
     return fig
 def BuildGetOverviewLayout(filtered_df,template):
     #indicator_height = 125 #these come huge by default
-    gauge_size = 250
+    ind_size = 250
     row_marg ='20px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df),style={'height': gauge_size})),
-            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': gauge_size})),
+            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df),style={'height': ind_size})),
+            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': ind_size})),
             #dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': indicator_height})),
-            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': gauge_size})),
-            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': gauge_size})),
-            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df,template), style={'height': gauge_size, 'width' : gauge_size})),
+            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': ind_size})),
+            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': ind_size})),
+            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df,template), style={'height': ind_size, 'width' : ind_size})),
             
         ], style={'margin-top': row_marg}),
-         dbc.Row([
+
+        dbc.Row([
+            #dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': 300})),
+        ], style={'margin-top': row_marg}),
+
+        dbc.Row([
             dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
-        ], style={'margin-top': row_marg})       
+            #dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
+        ], style={'margin-top': row_marg}),    
     ]
 
 ##################################################################################### Build the Navbar
