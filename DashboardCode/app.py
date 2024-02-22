@@ -20,7 +20,7 @@ raw_df = pd.read_parquet("gtd_clean_dataset_pqt.parquet")
 raw_df.set_index('Group', inplace=True)
 
 #################################################################################### build overview
-ov_ind_margin = 3
+ov_ind_margin = 5
 def ov_years_active_indicator(df):
     min_year = df['Year'].min()
     max_year = df['Year'].max()
@@ -95,24 +95,6 @@ def ov_victims_killed_indicator(df):
     )
     return fig
 
-def ov_stacked_area_chart_casualties(df, template):
-    df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
-
-    fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
-                  labels={'value': 'Number of Victims', 'variable': 'Type'},
-                  title='Casualties over Time',
-                  color_discrete_sequence=['yellow', 'red'],
-                  template=template)
-    
-    for trace in fig.data: #hate raw legend names
-            trace.name = trace.name.replace("NVictims", "")
-    
-    fig.update_layout(
-    showlegend=True,
-    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
-    )
-    return fig
-
 def ov_stacked_area_chart_casualties2(df, template):
     df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
     df_attacks = df.groupby('Year').size().reset_index(name='Attacks')
@@ -125,9 +107,6 @@ def ov_stacked_area_chart_casualties2(df, template):
 
     for trace in fig.data:
         trace.name = trace.name.replace("NVictims", "")
-    fig.update_layout(
-    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
-    )
     '''
     # Add line trace for attacks per year
     fig.add_trace(px.line(df_attacks, x='Year', y='Attacks', labels={'Attacks': 'Number of Attacks'}).data[0])
@@ -176,9 +155,6 @@ def line_polar_attack_types(df,template):
                         )
 
     fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), showlegend=False)
-    fig.update_layout(
-    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
-    )
     return fig
 
 def ov_attack_success_gauge(df, template):
@@ -202,30 +178,25 @@ def ov_attack_success_gauge(df, template):
     )
 
     return fig
+
 def BuildGetOverviewLayout(filtered_df,template):
-    #indicator_height = 125 #these come huge by default
-    ind_size = 250
     row_marg ='20px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df),style={'height': ind_size})),
-            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': ind_size})),
-            #dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': indicator_height})),
-            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': ind_size})),
-            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': ind_size})),
-            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df,template), style={'height': ind_size, 'width' : ind_size})),
-            
-        ], style={'margin-top': row_marg}),
+            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template))),
+        ],style={'margin-top': row_marg), 
 
         dbc.Row([
-            #dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': 300})),
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
             dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
-            #dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
-        ], style={'margin-top': row_marg}),    
+        ], style={'margin-top': row_marg}),  
     ]
 
 ##################################################################################### Build the Navbar
