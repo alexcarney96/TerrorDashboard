@@ -31,7 +31,7 @@ def ov_years_active_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=years_active,
-        title={"text": "Years Active", 'font': {'size': 16}},
+        title={"text": "Years Active", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
     return fig
@@ -42,7 +42,7 @@ def ov_num_attacks_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=num_attacks,
-        title={"text": "Attacks", 'font': {'size': 16}},
+        title={"text": "Attacks", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
     return fig
@@ -53,7 +53,7 @@ def ov_victims_wounded_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=total_wounded,
-        title={"text": "Victims Wounded", 'font': {'size': 16}},
+        title={"text": "Victims Wounded", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
     return fig
@@ -64,7 +64,7 @@ def ov_countries_affected_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=num_countries_affected,
-        title={"text": "Countries Affected", 'font': {'size': 16}},
+        title={"text": "Countries Affected", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
     return fig
@@ -75,20 +75,38 @@ def ov_victims_killed_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=total_victims_killed,
-        title={"text": "Victims Killed", 'font': {'size': 16}},
+        title={"text": "Victims Killed", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
     return fig
 
+def ov_stacked_area_chart_casualities(df, template):
+    df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
+
+    fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
+                  labels={'value': 'Number of Victims', 'variable': 'Type'},
+                  title='Casualties',
+                  color_discrete_sequence=['yellow', 'red'],
+                  template=template)
+    
+    for trace in fig.data: #hate raw legend names
+            trace.name = trace.name.replace("NVictims", "")
+    return fig
+
 def BuildGetOverviewLayout(filtered_df,template):
+    indicator_height = 125 #these come huge by default
+    row_marg ='20px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df))),
-        ])
+            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df),style={'height': indicator_height})),
+            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': indicator_height})),
+            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': indicator_height})),
+            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': indicator_height})),
+            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': indicator_height})),
+        ], style={'margin-top': row_marg}),
+         dbc.Row([
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualities(filtered_df,template)))
+        ], style={'margin-top': row_marg})       
     ]
 
 ##################################################################################### Build the Navbar
