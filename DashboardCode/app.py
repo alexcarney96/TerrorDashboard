@@ -6,6 +6,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.io as pio
 from dash_bootstrap_templates import load_figure_template
+import plotly.graph_objects as go
 
 
 ######################################################################################## Build our app  
@@ -19,26 +20,70 @@ raw_df = pd.read_parquet("gtd_clean_dataset_pqt.parquet")
 raw_df.set_index('Group', inplace=True)
 
 #################################################################################### build overview
-def ov_Fig1Test(df,template):
-    fig = px.bar(df, x='Country', 
-                    y='NVictimsKilled', 
-                    title='Group Overview - Value1',template=template)
-    return fig    
 
-def ov_Fig2Test(df,template):
-    fig = px.bar(df, x='Country', 
-                    y='NVictimsWounded', 
-                    title='Group Overview - Value2',template=template)
-    return fig  
+def victims_killed_indicator(df):
+    total_victims_killed = df['NVictimsKilled'].sum(skipna=True)
+    fig = go.Figure()
+
+    fig.add_trace(go.Indicator(
+        mode="number",
+        value=total_victims_killed,
+        title={"text": "Victims Killed"}
+    ))
+
+    return fig
+
+def years_active_indicator(df):
+    years_active = df['Year'].max() - df['Year'].min()
+    if years_active == 0:
+        years_active = 1
+    fig = go.Figure()
+    fig.add_trace(go.Indicator(
+        mode="number",
+        value=years_active,
+        title={"text": "Years Active"}
+    ))
+    return fig
+
+def number_of_attacks_indicator(df):
+    num_attacks = len(df)
+    fig = go.Figure()
+    fig.add_trace(go.Indicator(
+        mode="number",
+        value=num_attacks,
+        title={"text": "Attacks"}
+    ))
+    return fig
+
+def victims_wounded_indicator(df):
+    total_wounded = df['NVictimsWounded'].sum(skipna=True)
+    fig = go.Figure()
+    fig.add_trace(go.Indicator(
+        mode="number",
+        value=total_wounded,
+        title={"text": "Victims Wounded"}
+    ))
+    return fig
+
+def countries_affected_indicator(df):
+    countries_affected = df['Country'].nunique()
+    fig = go.Figure()
+    fig.add_trace(go.Indicator(
+        mode="number",
+        value=countries_affected,
+        title={"text": "Countries Affected"}
+    ))
+    return fig
 
 def BuildGetOverviewLayout(filtered_df,template):
-    fig1 = ov_Fig1Test(filtered_df,template)
-    fig2 = ov_Fig2Test(filtered_df,template)
+    victims_killed_ind = victims_killed_indicator(filtered_df)
     return [
         dbc.Row([
-            dbc.Col(html.Div("Hello sailor. this is alex speaking")),
-            dbc.Col(dcc.Graph(figure=fig1)),
-            dbc.Col(dcc.Graph(figure=fig2)),
+            dbc.Col(dcc.Graph(figure=number_of_attacks_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=years_active_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=countries_affected_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=victims_killed_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=victims_wounded_indicator(filtered_df))),
         ])
     ]
 
