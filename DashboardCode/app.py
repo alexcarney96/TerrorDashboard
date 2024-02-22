@@ -168,6 +168,7 @@ def ov_attack_success_gauge(df, template):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=success_rate,
+        number=dict(suffix='%'),
         title={'text': "Attack Success Rate"},
         #domain={'x': [0, 1], 'y': [0, 1]},
         gauge=dict(
@@ -194,7 +195,6 @@ def BuildGetOverviewLayout(filtered_df,template):
             
         ], style={'margin-top': row_marg}),
          dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df,template))),
             dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
             dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
         ], style={'margin-top': row_marg})       
