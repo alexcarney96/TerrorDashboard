@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.io as pio
 from dash_bootstrap_templates import load_figure_template
 import plotly.graph_objects as go
-
+from plotly.subplots import make_subplots
 
 ######################################################################################## Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
@@ -80,17 +80,85 @@ def ov_victims_killed_indicator(df):
     ))
     return fig
 
-def ov_stacked_area_chart_casualities(df, template):
+def ov_stacked_area_chart_casualties(df, template):
     df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
 
     fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
                   labels={'value': 'Number of Victims', 'variable': 'Type'},
-                  title='Casualties',
+                  title='Casualties over Time',
                   color_discrete_sequence=['yellow', 'red'],
                   template=template)
     
     for trace in fig.data: #hate raw legend names
             trace.name = trace.name.replace("NVictims", "")
+    
+    fig.update_layout(
+    showlegend=True,
+    height=400
+    )
+    return fig
+
+def ov_stacked_area_chart_casualties2(df, template):
+    df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
+    df_attacks = df.groupby('Year').size().reset_index(name='Attacks')
+
+    fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
+                  labels={'value': 'Number of Victims', 'variable': 'Type'},
+                  title='Casualties over Time',
+                  color_discrete_sequence=['yellow', 'red'],
+                  template=template)
+
+    for trace in fig.data:
+        trace.name = trace.name.replace("NVictims", "")
+    '''
+    # Add line trace for attacks per year
+    fig.add_trace(px.line(df_attacks, x='Year', y='Attacks', labels={'Attacks': 'Number of Attacks'}).data[0])
+
+    # Update layout to show secondary y-axis
+    fig.update_layout(
+        yaxis2=dict(
+            title='Number of Attacks',
+            overlaying='y',
+            side='right'
+        ),
+        showlegend=True,
+        height=400
+    )
+    '''
+    return fig
+
+def ov_stacked_bar_attacks_by_year(df, template):
+    df_grouped = df.groupby(['Year', 'AttackSuccess']).size().reset_index(name='Count')
+
+    fig = px.bar(df_grouped, x='Year', y='Count', color='AttackSuccess',
+                 title='Stacked Bar Plot of Attacks by Year',
+                 labels={'Count': 'Number of Attacks'},
+                 template=template)
+
+    fig.update_layout(barmode='stack')
+
+    return fig
+
+def line_polar_attack_types(df,template):
+    # Melt the DataFrame
+    df_melted = pd.melt(df, value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
+                        var_name='AttackType', value_name='AttackTypeValue')
+
+    # Drop rows with NaN values
+    df_melted = df_melted.dropna(subset=['AttackTypeValue'])
+    grp = df_melted.groupby("AttackTypeValue").size().reset_index(name="frequency")
+
+    grp  = grp[grp['AttackTypeValue'] != 'Unknown']
+    # Create the line polar plot
+    fig = px.bar_polar(grp, r="frequency",theta='AttackTypeValue',
+                        color=grp['AttackTypeValue'].unique(),
+                        title = 'Group Attack Profiles',
+                        color_discrete_sequence=px.colors.qualitative.Set1, height=400, template=template
+                        )
+
+    # Update layout to remove unnecessary elements
+    fig.update_layout(polar=dict(radialaxis=dict(visible=False)), showlegend=False)
+
     return fig
 
 def BuildGetOverviewLayout(filtered_df,template):
@@ -105,7 +173,8 @@ def BuildGetOverviewLayout(filtered_df,template):
             dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': indicator_height})),
         ], style={'margin-top': row_marg}),
          dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualities(filtered_df,template)))
+            dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
         ], style={'margin-top': row_marg})       
     ]
 
