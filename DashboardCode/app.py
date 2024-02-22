@@ -53,7 +53,7 @@ def ov_victims_wounded_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=total_wounded,
-        title={"text": "Victims Wounded", 'font': {'size': 26}},
+        title={"text": "Wounded", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
     return fig
@@ -75,7 +75,7 @@ def ov_victims_killed_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=total_victims_killed,
-        title={"text": "Victims Killed", 'font': {'size': 26}},
+        title={"text": "Killed", 'font': {'size': 26}},
         number={'font': {'size': 24}}
     ))
     return fig
@@ -161,18 +161,40 @@ def line_polar_attack_types(df,template):
 
     return fig
 
+def ov_attack_success_gauge(df, template):
+    # Calculate attack success rate (assuming 'AttackSuccess' is a column in the DataFrame)
+    success_rate = (df['AttackSuccess'].sum() / len(df)) * 100
+
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=success_rate,
+        title={'text': "Attack Success Rate"},
+        #domain={'x': [0, 1], 'y': [0, 1]},
+        gauge=dict(
+            axis=dict(range=[0, 100]),
+            bar=dict(color="red"),
+        )
+    ))
+
+    fig.update_layout(template=template)
+
+    return fig
 def BuildGetOverviewLayout(filtered_df,template):
-    indicator_height = 125 #these come huge by default
+    #indicator_height = 125 #these come huge by default
+    gauge_size = 250
     row_marg ='20px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df),style={'height': indicator_height})),
-            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': indicator_height})),
-            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': indicator_height})),
-            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': indicator_height})),
-            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': indicator_height})),
+            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df),style={'height': gauge_size})),
+            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': gauge_size})),
+            #dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': indicator_height})),
+            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': gauge_size})),
+            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': gauge_size})),
+            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df,template), style={'height': gauge_size, 'width' : gauge_size})),
+            
         ], style={'margin-top': row_marg}),
          dbc.Row([
+            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df,template))),
             dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
             dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
         ], style={'margin-top': row_marg})       
