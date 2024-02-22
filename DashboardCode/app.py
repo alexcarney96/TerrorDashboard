@@ -188,7 +188,7 @@ def BuildGetOverviewLayout(filtered_df,template):
             dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df))),
             dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df))),
             dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template))),
-        ],style={'margin-top': row_marg), 
+        ],style={'margin-top': row_marg}), 
 
         dbc.Row([
             dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
