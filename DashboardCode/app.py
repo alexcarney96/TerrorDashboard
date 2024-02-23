@@ -20,7 +20,7 @@ raw_df = pd.read_parquet("gtd_clean_dataset_pqt.parquet")
 raw_df.set_index('Group', inplace=True)
 
 #################################################################################### build overview
-ov_ind_margin = 5
+ov_ind_margin = 0
 def ov_years_active_indicator(df):
     min_year = df['Year'].min()
     max_year = df['Year'].max()
@@ -35,7 +35,7 @@ def ov_years_active_indicator(df):
         number={'font': {'size': 24}}
     ))
     fig.update_layout(
-    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
     return fig
 
@@ -49,7 +49,7 @@ def ov_num_attacks_indicator(df):
         number={'font': {'size': 24}}
     ))
     fig.update_layout(
-    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
     return fig
 
@@ -63,7 +63,7 @@ def ov_victims_wounded_indicator(df):
         number={'font': {'size': 24}}
     ))
     fig.update_layout(
-    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
     return fig
 
@@ -77,7 +77,7 @@ def ov_countries_affected_indicator(df):
         number={'font': {'size': 24}}
     ))
     fig.update_layout(
-    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
     return fig
 
@@ -91,7 +91,7 @@ def ov_victims_killed_indicator(df):
         number={'font': {'size': 24}}
     ))
     fig.update_layout(
-    margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
     return fig
 
@@ -174,7 +174,7 @@ def ov_attack_success_gauge(df, template):
     ))
     fig.update_layout(
         template=template,
-        margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
+        #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
 
     return fig
@@ -190,32 +190,62 @@ def ov_targetTypeBar(df,template):
     top_targets = grp.sort_values(by='frequency', ascending=False).head(5)
     fig = px.bar(top_targets, x='frequency', y='TargTypeValue',
                  title='Top 5 Targets',
-                 orientation='h', template=template)
-    fig.update_layout(yaxis_categoryorder='total ascending')
+                template=template)
+    fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''))
     return fig
 
+def ov_attacks_by_country_choropleth(df, template):
+    # Group by 'Country' and calculate the frequency
+    grouped_df = df.groupby("Country").size().reset_index(name="attacks")
+    grouped_df = grouped_df[grouped_df['attacks']>0]
+    # Create a choropleth map
+    fig = px.choropleth(grouped_df, 
+                        locations='Country', 
+                        locationmode='country names', 
+                        color='attacks',
+                        title=None,
+                        color_continuous_scale='YlOrRd',
+                        range_color=(0, grouped_df['attacks'].max()),
+                        template=template)
+    
+    fig.update_layout(
+        template=template,
+        coloraxis_showscale=False,
+        margin={"r":0,"t":0,"l":0,"b":0}
+    )
 
+    return fig
 
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='20px'
+    ind_height = '100px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template))),
-        ],style={'margin-top': row_marg}), 
-
-        dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
-            dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template)),width=4),
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_targetTypeBar(filtered_df,template))),
+            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df), style={'height': ind_height})),
+            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': ind_height})),
+            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': ind_height})),
+            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': ind_height})),
+            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': ind_height})),
+            #),
+        ],style={'margin-top': row_marg}), 
+
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template)),width=4),
+            dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template)),width=4),
+            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template)),width=4)
+        ], style={'margin-top': row_marg}),
+
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template)),width=8),
+            dbc.Col(dcc.Graph(figure=ov_targetTypeBar(filtered_df,template)),width=4),
         ], style={'margin-top': row_marg}),  
     ]
+
+
 
 ##################################################################################### Build the Navbar
 navbar = dbc.NavbarSimple(
