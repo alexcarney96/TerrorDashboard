@@ -11,8 +11,8 @@ from plotly.subplots import make_subplots
 
 ######################################################################################## Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY, dbc_css])
-template = "darkly"
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG, dbc_css])
+template = "cyborg" #darkly
 load_figure_template(template)
 
 ############################################################################# Loading data and making Group index for performance                   
@@ -152,9 +152,8 @@ def line_polar_attack_types(df,template):
     # Create the line polar plot
     fig = px.line_polar(grp, r="frequency",theta='AttackTypeValue',
                         line_close=True,
-                        
                         title = 'Attack Method Profile',
-                        color_discrete_sequence = px.colors.sequential.Plasma_r, template=template
+                        color_discrete_sequence=['#07cde3'], template=template
                         )
 
     fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), showlegend=False)
@@ -172,7 +171,7 @@ def ov_attack_success_gauge(df, template):
         #domain={'x': [0, 1], 'y': [0, 1]},
         gauge=dict(
             axis=dict(range=[0, 100]),
-            bar=dict(color="red"),
+            bar=dict(color='#07cde3'),
         )
     ))
     fig.update_layout(
@@ -192,7 +191,7 @@ def ov_targetTypeBar(df,template):
     grp = df_melted.groupby("TargTypeValue").size().reset_index(name="frequency")
     top_targets = grp.sort_values(by='frequency', ascending=False).head(5)
     fig = px.bar(top_targets, x='frequency', y='TargTypeValue',
-                 title='Top 5 Targets',
+                 title='Top 5 Targets',color_discrete_sequence=['#07cde3'],
                 template=template)
     fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''))
     return fig
@@ -206,7 +205,7 @@ def ov_attacks_by_country_choropleth(df, template):
                         locations='Country', 
                         locationmode='country names', 
                         color='attacks',
-                        title=None,
+                        title='Attack Frequency by Country',
                         color_continuous_scale='YlOrRd',
                         range_color=(0, grouped_df['attacks'].max()),
                         template=template)
@@ -214,7 +213,7 @@ def ov_attacks_by_country_choropleth(df, template):
     fig.update_layout(
         template=template,
         coloraxis_showscale=False,
-        margin={"r":0,"t":0,"l":0,"b":0}
+        margin={"r":5,"t":25,"l":5,"b":5}
     )
 
     return fig
@@ -222,6 +221,12 @@ def ov_attacks_by_country_choropleth(df, template):
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='15px'
     ind_height = '100px'
+
+    succ_targ = dbc.Row([
+            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df))),
+            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df))),
+        ],style={'margin-top': row_marg})
+    
     return [
         dbc.Row([
             dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df), style={'height': ind_height})),
@@ -237,7 +242,6 @@ def BuildGetOverviewLayout(filtered_df,template):
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template)),width=4),
             dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template)),width=4),
             dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template)),width=4)
         ], style={'margin-top': row_marg}),
@@ -265,7 +269,7 @@ navbar = dbc.NavbarSimple(
     ],
     brand="Global Terrorism Perpetrators",
     brand_href="/overview",
-    color="dark",
+    #color="dark",
     dark=True,
     style={'borderBottom': '1px solid white'}  # Add a border to the bottom of the navbar
 )
