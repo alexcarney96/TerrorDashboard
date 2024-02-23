@@ -9,6 +9,8 @@ from dash_bootstrap_templates import load_figure_template
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+
+##47ed05    #b1dba0 (lighter)
 ######################################################################################## Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG, dbc_css])
@@ -32,7 +34,7 @@ def ov_years_active_indicator(df):
         mode="number",
         value=years_active,
         title={"text": "Years Active", 'font': {'size': 26}},
-        number={'font': {'size': 24}}
+        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
     ))
     fig.update_layout(
     #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
@@ -46,7 +48,7 @@ def ov_num_attacks_indicator(df):
         mode="number",
         value=num_attacks,
         title={"text": "Attacks", 'font': {'size': 26}},
-        number={'font': {'size': 24}}
+        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
     ))
     fig.update_layout(
     #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
@@ -60,7 +62,7 @@ def ov_victims_wounded_indicator(df):
         mode="number",
         value=total_wounded,
         title={"text": "Wounded", 'font': {'size': 26}},
-        number={'font': {'size': 24}}
+        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
     ))
     fig.update_layout(
     #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
@@ -74,7 +76,7 @@ def ov_countries_affected_indicator(df):
         mode="number",
         value=num_countries_affected,
         title={"text": "Countries Affected", 'font': {'size': 26}},
-        number={'font': {'size': 24}}
+        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
     ))
     fig.update_layout(
     #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
@@ -88,7 +90,7 @@ def ov_victims_killed_indicator(df):
         mode="number",
         value=total_victims_killed,
         title={"text": "Killed", 'font': {'size': 26}},
-        number={'font': {'size': 24}}
+        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
     ))
     fig.update_layout(
     #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
@@ -102,7 +104,7 @@ def ov_stacked_area_chart_casualties2(df, template):
     fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
                   labels={'value': 'Number of Victims', 'variable': 'Type'},
                   title='',#'Casualties over Time',
-                  color_discrete_sequence=['yellow', 'red'],
+                  color_discrete_sequence=['#b1dba0', '#47ed05'],
                   template=template)
 
     for trace in fig.data:
@@ -110,35 +112,9 @@ def ov_stacked_area_chart_casualties2(df, template):
     fig.update_layout(
         margin={"r":5,"t":5,"l":5,"b":5}
     )
-    '''
-    # Add line trace for attacks per year
-    fig.add_trace(px.line(df_attacks, x='Year', y='Attacks', labels={'Attacks': 'Number of Attacks'}).data[0])
-
-    # Update layout to show secondary y-axis
-    fig.update_layout(
-        yaxis2=dict(
-            title='Number of Attacks',
-            overlaying='y',
-            side='right'
-        ),
-        showlegend=True,
-        height=400
-    )
-    '''
-    return fig
-'''
-def ov_stacked_bar_attacks_by_year(df, template):
-    df_grouped = df.groupby(['Year', 'AttackSuccess']).size().reset_index(name='Count')
-
-    fig = px.bar(df_grouped, x='Year', y='Count', color='AttackSuccess',
-                 title='Stacked Bar Plot of Attacks by Year',
-                 labels={'Count': 'Number of Attacks'},
-                 template=template)
-
-    fig.update_layout(barmode='stack')
 
     return fig
-'''
+
 def line_polar_attack_types(df,template):
     # Melt the DataFrame
     df_melted = pd.melt(df, value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
@@ -153,10 +129,11 @@ def line_polar_attack_types(df,template):
     fig = px.line_polar(grp, r="frequency",theta='AttackTypeValue',
                         line_close=True,
                         title = 'Attack Method Profile',
-                        color_discrete_sequence=['#07cde3'], template=template
+                        color_discrete_sequence=['#47ed05'], template=template
                         )
 
-    fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), showlegend=False)
+    fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), 
+                      showlegend=False,margin={"r":5,"t":50,"l":5,"b":50})
     return fig
 
 def ov_attack_success_gauge(df, template):
@@ -171,11 +148,12 @@ def ov_attack_success_gauge(df, template):
         #domain={'x': [0, 1], 'y': [0, 1]},
         gauge=dict(
             axis=dict(range=[0, 100]),
-            bar=dict(color='#07cde3'),
+            bar=dict(color='#47ed05'),
         )
     ))
     fig.update_layout(
         template=template,
+        margin={"r":25,"t":50,"l":25,"b":5}
         #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
 
@@ -191,12 +169,17 @@ def ov_targetTypeBar(df,template):
     grp = df_melted.groupby("TargTypeValue").size().reset_index(name="frequency")
     top_targets = grp.sort_values(by='frequency', ascending=False).head(5)
     fig = px.bar(top_targets, x='frequency', y='TargTypeValue',
-                 title='Top 5 Targets',color_discrete_sequence=['#07cde3'],
+                 title='Top 5 Targets',color_discrete_sequence=['#47ed05'],
                 template=template)
-    fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''))
+    fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''),
+                      margin={"r":5,"t":50,"l":5,"b":5})
     return fig
 
 def ov_attacks_by_country_choropleth(df, template):
+    color_scale = [
+        [0, '#b1dba0'],
+        [1, '#47ed05']
+    ]
     # Group by 'Country' and calculate the frequency
     grouped_df = df.groupby("Country").size().reset_index(name="attacks")
     grouped_df = grouped_df[grouped_df['attacks']>0]
@@ -206,27 +189,22 @@ def ov_attacks_by_country_choropleth(df, template):
                         locationmode='country names', 
                         color='attacks',
                         title='Attack Frequency by Country',
-                        color_continuous_scale='YlOrRd',
+                        color_continuous_scale=color_scale,
                         range_color=(0, grouped_df['attacks'].max()),
                         template=template)
     
     fig.update_layout(
         template=template,
         coloraxis_showscale=False,
-        margin={"r":5,"t":25,"l":5,"b":5}
+        margin={"r":5,"t":40,"l":5,"b":5}
     )
 
     return fig
 
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='15px'
-    ind_height = '100px'
-
-    succ_targ = dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df))),
-            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df))),
-        ],style={'margin-top': row_marg})
-    
+    ind_height = '125px'
+    meth_height = '275px'
     return [
         dbc.Row([
             dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df), style={'height': ind_height})),
@@ -242,13 +220,15 @@ def BuildGetOverviewLayout(filtered_df,template):
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template)),width=4),
-            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template)),width=4)
+            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': meth_height}),width=4),
+            dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template), style={'height': meth_height}),width=4),
+            dbc.Col(dcc.Graph(figure=ov_targetTypeBar(filtered_df,template), style={'height': meth_height}),width=4)
+            
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template)),width=8),
-            dbc.Col(dcc.Graph(figure=ov_targetTypeBar(filtered_df,template)),width=4),
+            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template)),width=8)
+            
         ], style={'margin-top': row_marg}),  
     ]
 
