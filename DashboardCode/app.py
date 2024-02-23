@@ -203,7 +203,7 @@ def ov_attacks_by_country_choropleth(df, template):
 
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='15px'
-    ind_height = '125px'
+    ind_height = '100px'
     meth_height = '275px'
     return [
         dbc.Row([
@@ -249,7 +249,7 @@ navbar = dbc.NavbarSimple(
     ],
     brand="Global Terrorism Perpetrators",
     brand_href="/overview",
-    #color="dark",
+    color="dark",
     dark=True,
     style={'borderBottom': '1px solid white'}  # Add a border to the bottom of the navbar
 )
