@@ -70,7 +70,9 @@ def BuildColumns(df):
         'Journalists & Media' : 'Media',
         'Private Citizens & Property' : 'Citizens/Property',
         'Religious Figures/Institutions' :'Religious Entity',
-        'Terrorists/Non-State Militia' : 'Terrorists/Militia'
+        'Terrorists/Non-State Militia' : 'Terrorists/Militia',
+        'Telecommunication' : 'Telecom/Utilities',
+        'Utilities' : 'Telecom/Utilities',
     }
     df_temp['TargetType1'].replace(targ_type_ren,inplace=True)
     df_temp['TargetType2'].replace(targ_type_ren,inplace=True)
@@ -82,17 +84,6 @@ def BuildColumns(df):
     df_temp['WeaponType1'].replace(wep_type_ren,inplace=True)
     df_temp['WeaponType2'].replace(wep_type_ren,inplace=True)
     df_temp['WeaponType3'].replace(wep_type_ren,inplace=True)
-
-    targ_subtype_ren = {
-        'Airports & Aircraft' : 'Airport/Aircraft',
-        'Food or Water Supply':  'Food/Water Supply',
-        'Government (Diplomatic)' : 'Government',
-        'Government (General)' : 'Government',
-        'Journalists & Media' : 'Media',
-        'Private Citizens & Property' : 'Citizens/Property',
-        'Religious Figures/Institutions' :'Religious Entity',
-        'Terrorists/Non-State Militia' : 'Terrorists/Militia'
-    }
 
     return df_temp
 
@@ -218,7 +209,7 @@ def FilterToApplicableGroups(df,exclude_groups_fpath,n_groups_to_keep,year_thres
 
 if __name__ == "__main__":
     ## Extract
-    gtd_fpath = r"../../RawData/globalterrorismdb_0522dist.xlsx"
+    gtd_fpath = r"../../../RawData/globalterrorismdb_0522dist.xlsx"
     out_fpath_pqt =r"../DashboardCode/gtd_clean_dataset_pqt.parquet"
     out_fpath_csv =r"../DashboardCode/gtd_clean_dataset_csv.csv"
     read_cols_fpath = r"ReadCols.xlsx"

@@ -179,6 +179,23 @@ def ov_attack_success_gauge(df, template):
 
     return fig
 
+def ov_targetTypeBar(df,template):
+    # Melt the DataFrame
+    df_melted = pd.melt(df, value_vars=['TargetType1', 'TargetType2', 'TargetType3'],
+                        var_name='TargTypeCol', value_name='TargTypeValue')
+
+    # Drop rows with NaN values
+    df_melted = df_melted.dropna(subset=['TargTypeValue'])
+    grp = df_melted.groupby("TargTypeValue").size().reset_index(name="frequency")
+    top_targets = grp.sort_values(by='frequency', ascending=False).head(5)
+    fig = px.bar(top_targets, x='frequency', y='TargTypeValue',
+                 title='Top 5 Targets',
+                 orientation='h', template=template)
+    fig.update_layout(yaxis_categoryorder='total ascending')
+    return fig
+
+
+
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='20px'
     return [
@@ -192,10 +209,11 @@ def BuildGetOverviewLayout(filtered_df,template):
 
         dbc.Row([
             dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template))),
+            dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=line_polar_attack_types(filtered_df,template))),
+            dbc.Col(dcc.Graph(figure=ov_targetTypeBar(filtered_df,template))),
         ], style={'margin-top': row_marg}),  
     ]
 
