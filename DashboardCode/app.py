@@ -101,12 +101,15 @@ def ov_stacked_area_chart_casualties2(df, template):
 
     fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
                   labels={'value': 'Number of Victims', 'variable': 'Type'},
-                  title='Casualties over Time',
+                  title='',#'Casualties over Time',
                   color_discrete_sequence=['yellow', 'red'],
                   template=template)
 
     for trace in fig.data:
         trace.name = trace.name.replace("NVictims", "")
+    fig.update_layout(
+        margin={"r":5,"t":5,"l":5,"b":5}
+    )
     '''
     # Add line trace for attacks per year
     fig.add_trace(px.line(df_attacks, x='Year', y='Attacks', labels={'Attacks': 'Number of Attacks'}).data[0])
@@ -217,13 +220,9 @@ def ov_attacks_by_country_choropleth(df, template):
     return fig
 
 def BuildGetOverviewLayout(filtered_df,template):
-    row_marg ='20px'
+    row_marg ='15px'
     ind_height = '100px'
     return [
-        dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template)),width=4),
-        ], style={'margin-top': row_marg}),
-
         dbc.Row([
             dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df), style={'height': ind_height})),
             dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': ind_height})),
@@ -232,6 +231,10 @@ def BuildGetOverviewLayout(filtered_df,template):
             dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': ind_height})),
             #),
         ],style={'margin-top': row_marg}), 
+
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '175px'}),width=12),
+        ], style={'margin-top': row_marg}),
 
         dbc.Row([
             dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template)),width=4),
