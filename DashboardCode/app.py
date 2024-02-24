@@ -133,7 +133,7 @@ def line_polar_attack_types(df,template):
                         )
 
     fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), 
-                      showlegend=False,margin={"r":5,"t":50,"l":5,"b":50})
+                      showlegend=False,margin={"r":5,"t":50,"l":5,"b":40})
     return fig
 
 def ov_attack_success_gauge(df, template):
@@ -153,7 +153,7 @@ def ov_attack_success_gauge(df, template):
     ))
     fig.update_layout(
         template=template,
-        margin={"r":25,"t":50,"l":25,"b":5}
+        margin={"r":40,"t":50,"l":40,"b":5}
         #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
 
@@ -169,7 +169,7 @@ def ov_targetTypeBar(df,template):
     grp = df_melted.groupby("TargTypeValue").size().reset_index(name="frequency")
     top_targets = grp.sort_values(by='frequency', ascending=False).head(5)
     fig = px.bar(top_targets, x='frequency', y='TargTypeValue',
-                 title='Top 5 Targets',color_discrete_sequence=['#47ed05'],
+                 title='Top 5 Target Types',color_discrete_sequence=['#47ed05'],
                 template=template)
     fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''),
                       margin={"r":5,"t":50,"l":5,"b":5})
@@ -201,6 +201,39 @@ def ov_attacks_by_country_choropleth(df, template):
 
     return fig
 
+def ov_country_table(df):
+    victims_df = df.groupby('Country').agg({
+        'NVictimsKilled': 'sum', 'NVictimsWounded': 'sum'}).reset_index()
+    
+    # Group by 'Country' and calculate the count of attacks
+    attacks_df = df.groupby('Country').size().reset_index(name='NumofAttacks')
+
+    # Merge the two dataframes on 'Country'
+    grouped_df = victims_df.merge(attacks_df, on='Country', how='left')
+
+    grouped_df = grouped_df[grouped_df['NumofAttacks']>0]
+
+    fig = go.Figure(data=[go.Table(
+        header=dict(values=['Country','Attacks','Killed', 'Wounded'],
+                    fill_color='#9ab793', 
+                    font=dict(color='#36413e'),
+                    align='center'),
+        cells=dict(values=[
+            grouped_df['Country'],
+            grouped_df['NumofAttacks'],
+            grouped_df['NVictimsKilled'],
+            grouped_df['NVictimsWounded']
+            
+        ],
+                   fill_color='#b1dba0',
+                   font=dict(color='#addbe6'),
+                   align='center')
+    )])
+
+    fig.update_layout(title='',template=template,margin={"r":5,"t":5,"l":5,"b":5})
+
+    return fig
+
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='15px'
     ind_height = '100px'
@@ -227,8 +260,9 @@ def BuildGetOverviewLayout(filtered_df,template):
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template)),width=8)
             
+            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template)),width=8),
+            dbc.Col(dcc.Graph(figure=ov_country_table(filtered_df)),width=4),
         ], style={'margin-top': row_marg}),  
     ]
 
