@@ -8,9 +8,10 @@ import plotly.io as pio
 from dash_bootstrap_templates import load_figure_template
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.subplots as sp
 
 
-##47ed05    #b1dba0 (lighter)
+##47ed05    #b1dba0 (lighter)   #addbe6(nice blue)
 ######################################################################################## Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG, dbc_css])
@@ -97,7 +98,7 @@ def ov_victims_killed_indicator(df):
     )
     return fig
 
-def ov_stacked_area_chart_casualties2(df, template):
+def ov_stacked_area_chart_casualties1(df, template):
     df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
     df_attacks = df.groupby('Year').size().reset_index(name='Attacks')
 
@@ -114,6 +115,33 @@ def ov_stacked_area_chart_casualties2(df, template):
     )
 
     return fig
+
+def ov_stacked_area_chart_casualties2(df, template):
+    #Todo can do this with one dataset
+    df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
+    df_attacks = df.groupby('Year').size().reset_index(name='Attacks')
+
+    fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
+                  labels={'value': 'Number of Victims', 'variable': 'Type'},
+                  title='', color_discrete_sequence=['#b1dba0', '#47ed05'],
+                  template=template)
+
+    for trace in fig.data:
+        trace.name = trace.name.replace("NVictims", "")
+
+    fig_bar = go.Figure(go.Bar(x=df_attacks['Year'], 
+                               y=df_attacks['Attacks'], name='Events',marker_color='#36413e'))
+    fig_bar.update_layout(showlegend=False)
+
+    subplot = sp.make_subplots(rows=2, cols=1, shared_xaxes=True, 
+                               vertical_spacing=0.2, subplot_titles=['Casualties', 'Attack Frequency'])
+
+    for trace in fig.data:
+        subplot.add_trace(trace, row=1, col=1)
+    subplot.add_trace(fig_bar.data[0], row=2, col=1)
+
+    subplot.update_layout(template=template, margin={"r": 5, "t": 20, "l": 5, "b": 5})
+    return subplot
 
 def line_polar_attack_types(df,template):
     # Melt the DataFrame
@@ -201,38 +229,6 @@ def ov_attacks_by_country_choropleth(df, template):
 
     return fig
 
-def ov_country_table(df):
-    victims_df = df.groupby('Country').agg({
-        'NVictimsKilled': 'sum', 'NVictimsWounded': 'sum'}).reset_index()
-    
-    # Group by 'Country' and calculate the count of attacks
-    attacks_df = df.groupby('Country').size().reset_index(name='NumofAttacks')
-
-    # Merge the two dataframes on 'Country'
-    grouped_df = victims_df.merge(attacks_df, on='Country', how='left')
-
-    grouped_df = grouped_df[grouped_df['NumofAttacks']>0]
-
-    fig = go.Figure(data=[go.Table(
-        header=dict(values=['Country','Attacks','Killed', 'Wounded'],
-                    fill_color='#9ab793', 
-                    font=dict(color='#36413e'),
-                    align='center'),
-        cells=dict(values=[
-            grouped_df['Country'],
-            grouped_df['NumofAttacks'],
-            grouped_df['NVictimsKilled'],
-            grouped_df['NVictimsWounded']
-            
-        ],
-                   fill_color='#b1dba0',
-                   font=dict(color='#addbe6'),
-                   align='center')
-    )])
-
-    fig.update_layout(title='',template=template,margin={"r":5,"t":5,"l":5,"b":5})
-
-    return fig
 
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='15px'
@@ -249,7 +245,7 @@ def BuildGetOverviewLayout(filtered_df,template):
         ],style={'margin-top': row_marg}), 
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '175px'}),width=12),
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '200px'}),width=12),
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
@@ -260,10 +256,8 @@ def BuildGetOverviewLayout(filtered_df,template):
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
-            
-            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template)),width=8),
-            dbc.Col(dcc.Graph(figure=ov_country_table(filtered_df)),width=4),
-        ], style={'margin-top': row_marg}),  
+            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template)),width=12),
+        ], style={'margin-top': row_marg}),
     ]
 
 
