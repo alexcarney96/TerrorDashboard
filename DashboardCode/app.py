@@ -231,7 +231,7 @@ def ov_attacks_by_country_choropleth(df, template):
                         locations='Country',
                         locationmode='country names',
                         color='attacks',
-                        title='Attack Frequency by Country',
+                        title='Attacks by Country',
                         color_continuous_scale=color_scale,
                         range_color=(0, grouped_df['attacks'].max()),
                         template=template,
