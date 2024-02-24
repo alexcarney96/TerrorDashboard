@@ -212,23 +212,35 @@ def ov_attacks_by_country_choropleth(df, template):
         [0, '#b1dba0'],
         [1, '#47ed05']
     ]
-    # Group by 'Country' and calculate the frequency
-    grouped_df = df.groupby("Country").size().reset_index(name="attacks")
-    grouped_df = grouped_df[grouped_df['attacks']>0]
+
+    # Calculate the attack count by country
+    attacks_df = df.groupby("Country").size().reset_index(name="attacks")
+    attacks_df = attacks_df[attacks_df['attacks'] > 0]
+
+    # Calculate the sum of killed and wounded by country
+    victims_df = df.groupby("Country").agg({
+        'NVictimsKilled': 'sum',
+        'NVictimsWounded': 'sum'
+    }).reset_index()
+
+    # Merge the two dataframes on 'Country'
+    grouped_df = attacks_df.merge(victims_df, on='Country', how='left')
+
     # Create a choropleth map
-    fig = px.choropleth(grouped_df, 
-                        locations='Country', 
-                        locationmode='country names', 
+    fig = px.choropleth(grouped_df,
+                        locations='Country',
+                        locationmode='country names',
                         color='attacks',
                         title='Attack Frequency by Country',
                         color_continuous_scale=color_scale,
                         range_color=(0, grouped_df['attacks'].max()),
-                        template=template)
-    
+                        template=template,
+                        hover_data=['NVictimsKilled', 'NVictimsWounded', 'Country'])
+
     fig.update_layout(
         template=template,
         coloraxis_showscale=False,
-        margin={"r":5,"t":30,"l":5,"b":5}
+        margin={"r": 5, "t": 30, "l": 5, "b": 5}
     )
 
     return fig
