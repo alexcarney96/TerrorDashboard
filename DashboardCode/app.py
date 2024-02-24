@@ -157,7 +157,7 @@ def line_polar_attack_types(df,template):
     # Create the line polar plot
     fig = px.line_polar(grp, r="frequency",theta='AttackTypeValue',
                         line_close=True,
-                        title = 'Attack Method Profile',
+                        title = 'Attack Method',
                         color_discrete_sequence=['#47ed05'], template=template
                         )
 
@@ -267,12 +267,12 @@ def BuildGetOverviewLayout(filtered_df,template):
         ], style={'margin-top': row_marg}),
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template), style={'height': meth_height}),width=6),
+            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template), style={'height': meth_height}),width=8),
             dbc.Col(
                 children = [
                 dcc.Graph(figure=line_polar_attack_types(filtered_df,template), style={'height': '225px'}),
                 dcc.Graph(figure=ov_targetTypeBar(filtered_df,template), style={'height': '225px'})
-                ],width=6),
+                ],width=4),
             
             
         ], style={'margin-top': row_marg}),
