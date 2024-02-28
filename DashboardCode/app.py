@@ -325,7 +325,7 @@ app.layout = dbc.Container(
         navbar,
         html.Div(id='page-content')
     ],
-    fluid=False
+    fluid=False,className="dbc"
 )
 
 ########################################### Callback to update page content based on URL and dropdown value
@@ -335,18 +335,17 @@ app.layout = dbc.Container(
 def update_page_content(pathname, selected_group):
     filtered_df = raw_df[raw_df.index == selected_group]
 
-    ov = BuildGetOverviewLayout(filtered_df,template)
-    at = BuildGetAttackLayout(filtered_df,template)
-    geo = BuildGetGeoLayout(filtered_df,template)
+    #ov = BuildGetOverviewLayout(filtered_df,template)
+    #at = BuildGetAttackLayout(filtered_df,template)
+    #geo = BuildGetGeoLayout(filtered_df,template)
     if pathname == '/overview':
-
-        return ov
+        return BuildGetOverviewLayout(filtered_df,template)
 
     elif pathname == '/attackmethod':
-        return at
+        return BuildGetAttackLayout(filtered_df,template)
 
     elif pathname == '/geo':
-        return geo
+        return BuildGetGeoLayout(filtered_df,template)
 
 ############################################ Callback to update active state of NavLinks and highlight them
 @app.callback(
