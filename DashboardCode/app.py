@@ -75,7 +75,7 @@ def ov_countries_affected_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=num_countries_affected,
-        title={"text": "Countries Affected", 'font': {'size': 26}},
+        title={"text": "Countries", 'font': {'size': 26}},
         number={'font': {'size': 24}, 'font_color' : t_green}
     ))
 
@@ -225,11 +225,11 @@ def BuildGetOverviewLayout(filtered_df,template):
     meth_height = '450px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df), style={'height': ind_height})),
-            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': ind_height})),
-            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': ind_height})),
-            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': ind_height})),
-            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': ind_height})),
+            dbc.Col(dcc.Graph(figure=ov_years_active_indicator(filtered_df), style={'height': ind_height}),width=2),
+            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': ind_height}),width=2),
+            dbc.Col(dcc.Graph(figure=ov_num_attacks_indicator(filtered_df), style={'height': ind_height}),width=4),
+            dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': ind_height}),width=2),
+            dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': ind_height}),width=2),
         ],style={'margin-top': row_marg}), 
 
         dbc.Row([
@@ -252,17 +252,33 @@ def BuildGetOverviewLayout(filtered_df,template):
 
 
 #####################################################################################Build Attack page
-
+def scatter(df, template):
+    data=[[1, 25, 30, 50, 1], [20, 1, 60, 80, 30], [30, 60, 1, 5, 20]]
+    fig = px.scatter(x=data[0], y=data[1])
+    return fig
 
 
 
 
 def BuildGetAttackLayout(filtered_df,template):
     row_marg ='25px'
+    ind_height = '150px'
+    meth_height = '450px'
     return [
         dbc.Row([ 
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '250px'}),width=9),
-            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '250px'}),width=3),
+            dbc.Col(dcc.Graph(figure=scatter(filtered_df,template), style={'height': '450px'}),width=12),
+            #dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '450px'}),width=2),
+        ], style={'margin-top': row_marg}),
+
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template), style={'height': meth_height}),width=8),
+            dbc.Col(
+                children = [
+                dcc.Graph(figure=line_polar_attack_types(filtered_df,template), style={'height': '225px'}),
+                dcc.Graph(figure=ov_targetTypeBar(filtered_df,template), style={'height': '225px'})
+                ],width=4),
+            
+            
         ], style={'margin-top': row_marg}),
 
     ]
@@ -305,12 +321,11 @@ navbar = dbc.NavbarSimple(
 ######################################################################################## Page layout
 app.layout = dbc.Container(
     [
-        dcc.Location(id='url', refresh=False, pathname='/overview'),  # Set default page to "/page1"
+        dcc.Location(id='url', refresh=False, pathname='/overview'),  # Set default page to "/overview"
         navbar,
         html.Div(id='page-content')
     ],
-    fluid=False,
-    className="dbc"
+    fluid=False
 )
 
 ########################################### Callback to update page content based on URL and dropdown value
@@ -320,14 +335,18 @@ app.layout = dbc.Container(
 def update_page_content(pathname, selected_group):
     filtered_df = raw_df[raw_df.index == selected_group]
 
+    ov = BuildGetOverviewLayout(filtered_df,template)
+    at = BuildGetAttackLayout(filtered_df,template)
+    geo = BuildGetGeoLayout(filtered_df,template)
     if pathname == '/overview':
-        return BuildGetOverviewLayout(filtered_df,template)
+
+        return ov
 
     elif pathname == '/attackmethod':
-        return BuildGetAttackLayout(filtered_df,template)
+        return at
 
     elif pathname == '/geo':
-        return BuildGetGeoLayout(filtered_df,template)
+        return geo
 
 ############################################ Callback to update active state of NavLinks and highlight them
 @app.callback(
