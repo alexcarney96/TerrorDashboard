@@ -9,13 +9,20 @@ from dash_bootstrap_templates import load_figure_template
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.subplots as sp
+import colorsys
 
 
-##47ed05    #b1dba0 (lighter)   #addbe6(nice blue)
+######################################Build and define some custom colors
+t_green = '#47ed05'
+t_light_green = '#b1dba0'
+t_bluegray ='#36413e'
+t_colors = [t_green,t_light_green,t_bluegray]
+
+
 ######################################################################################## Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG, dbc_css])
-template = "cyborg" #darkly
+template = "cyborg"
 load_figure_template(template)
 
 ############################################################################# Loading data and making Group index for performance                   
@@ -35,11 +42,8 @@ def ov_years_active_indicator(df):
         mode="number",
         value=years_active,
         title={"text": "Years Active", 'font': {'size': 26}},
-        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
+        number={'font': {'size': 24}, 'font_color' : t_green}
     ))
-    fig.update_layout(
-    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
-    )
     return fig
 
 def ov_num_attacks_indicator(df):
@@ -49,11 +53,9 @@ def ov_num_attacks_indicator(df):
         mode="number",
         value=num_attacks,
         title={"text": "Attacks", 'font': {'size': 26}},
-        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
+        number={'font': {'size': 24}, 'font_color' : t_green}
     ))
-    fig.update_layout(
-    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
-    )
+
     return fig
 
 def ov_victims_wounded_indicator(df):
@@ -63,11 +65,8 @@ def ov_victims_wounded_indicator(df):
         mode="number",
         value=total_wounded,
         title={"text": "Wounded", 'font': {'size': 26}},
-        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
+        number={'font': {'size': 24}, 'font_color' : t_green}
     ))
-    fig.update_layout(
-    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
-    )
     return fig
 
 def ov_countries_affected_indicator(df):
@@ -77,11 +76,9 @@ def ov_countries_affected_indicator(df):
         mode="number",
         value=num_countries_affected,
         title={"text": "Countries Affected", 'font': {'size': 26}},
-        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
+        number={'font': {'size': 24}, 'font_color' : t_green}
     ))
-    fig.update_layout(
-    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
-    )
+
     return fig
 
 def ov_victims_killed_indicator(df):
@@ -91,28 +88,8 @@ def ov_victims_killed_indicator(df):
         mode="number",
         value=total_victims_killed,
         title={"text": "Killed", 'font': {'size': 26}},
-        number={'font': {'size': 24}, 'font_color' : '#47ed05'}
+        number={'font': {'size': 24}, 'font_color' : t_green}
     ))
-    fig.update_layout(
-    #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
-    )
-    return fig
-
-def ov_stacked_area_chart_casualties1(df, template):
-    df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
-    df_attacks = df.groupby('Year').size().reset_index(name='Attacks')
-
-    fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
-                  labels={'value': 'Number of Victims', 'variable': 'Type'},
-                  title='',#'Casualties over Time',
-                  color_discrete_sequence=['#b1dba0', '#47ed05'],
-                  template=template)
-
-    for trace in fig.data:
-        trace.name = trace.name.replace("NVictims", "")
-    fig.update_layout(
-        margin={"r":5,"t":5,"l":5,"b":5}
-    )
 
     return fig
 
@@ -123,14 +100,14 @@ def ov_stacked_area_chart_casualties2(df, template):
 
     fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
                   labels={'value': 'Number of Victims', 'variable': 'Type'},
-                  title='', color_discrete_sequence=['#b1dba0', '#47ed05'],
+                  title='', color_discrete_sequence=[t_light_green, t_green],
                   template=template)
 
     for trace in fig.data:
         trace.name = trace.name.replace("NVictims", "")
 
     fig_bar = go.Figure(go.Bar(x=df_attacks['Year'], 
-                               y=df_attacks['Attacks'], name='Events',marker_color='#36413e'))
+                               y=df_attacks['Attacks'], name='Events',marker_color=t_bluegray))
     fig_bar.update_layout(showlegend=False)
 
     subplot = sp.make_subplots(rows=2, cols=1, shared_xaxes=True, 
@@ -158,13 +135,12 @@ def line_polar_attack_types(df,template):
     fig = px.line_polar(grp, r="frequency",theta='AttackTypeValue',
                         line_close=True,
                         title = 'Attack Method',
-                        color_discrete_sequence=['#47ed05'], template=template
+                        color_discrete_sequence=[t_green], template=template
                         )
 
     fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), 
                       showlegend=False,
                       margin={"r":50,"t":30,"l":50,"b":30}
-                      #margin={"t":40,"b":40}
                       )
     return fig
 
@@ -177,16 +153,13 @@ def ov_attack_success_gauge(df, template):
         value=success_rate,
         number=dict(suffix='%'),
         title={'text': "Attack Success Rate"},
-        #domain={'x': [0, 1], 'y': [0, 1]},
         gauge=dict(
             axis=dict(range=[0, 100]),
-            bar=dict(color='#47ed05'),
+            bar=dict(color=t_green),
         )
     ))
     fig.update_layout(
         template=template,
-        #margin={"r":40,"t":50,"l":40,"b":5}
-        #margin=dict(l=ov_ind_margin, r=ov_ind_margin, t=ov_ind_margin, b=ov_ind_margin)
     )
 
     return fig
@@ -201,16 +174,16 @@ def ov_targetTypeBar(df,template):
     grp = df_melted.groupby("TargTypeValue").size().reset_index(name="frequency")
     top_targets = grp.sort_values(by='frequency', ascending=False).head(5)
     fig = px.bar(top_targets, x='frequency', y='TargTypeValue',
-                 title='Top 5 Target Types',color_discrete_sequence=['#47ed05'],
-                template=template)
+                 title='Top 5 Target Types',color_discrete_sequence=[t_green],
+                template=template) 
     fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''),
                       margin={"r":5,"t":40,"l":5,"b":5})
     return fig
 
 def ov_attacks_by_country_choropleth(df, template):
     color_scale = [
-        [0, '#b1dba0'],
-        [1, '#47ed05']
+        [0, t_light_green],
+        [1, t_green]
     ]
 
     # Calculate the attack count by country
@@ -257,11 +230,9 @@ def BuildGetOverviewLayout(filtered_df,template):
             dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df), style={'height': ind_height})),
             dbc.Col(dcc.Graph(figure=ov_victims_killed_indicator(filtered_df), style={'height': ind_height})),
             dbc.Col(dcc.Graph(figure=ov_victims_wounded_indicator(filtered_df), style={'height': ind_height})),
-            #),
         ],style={'margin-top': row_marg}), 
 
         dbc.Row([
-            
             dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '250px'}),width=9),
             dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '250px'}),width=3),
         ], style={'margin-top': row_marg}),
@@ -276,12 +247,39 @@ def BuildGetOverviewLayout(filtered_df,template):
             
             
         ], style={'margin-top': row_marg}),
-
-        dbc.Row([
-            #dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template)),width=12),
-        ], style={'margin-top': row_marg}),
     ]
 
+
+
+#####################################################################################Build Attack page
+
+
+
+
+
+def BuildGetAttackLayout(filtered_df,template):
+    row_marg ='25px'
+    return [
+        dbc.Row([ 
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '250px'}),width=9),
+            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '250px'}),width=3),
+        ], style={'margin-top': row_marg}),
+
+    ]
+
+
+
+
+#####################################################################################Build Geo page
+def BuildGetGeoLayout(filtered_df,template):
+    row_marg ='25px'
+    return [
+        dbc.Row([ 
+            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '250px'}),width=9),
+            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '250px'}),width=3),
+        ], style={'margin-top': row_marg}),
+
+    ]
 
 
 ##################################################################################### Build the Navbar
@@ -320,27 +318,16 @@ app.layout = dbc.Container(
               [Input('url', 'pathname'),
                Input('group-dropdown', 'value')])
 def update_page_content(pathname, selected_group):
-    if selected_group == 'ALL':
-        selected_group = None
     filtered_df = raw_df[raw_df.index == selected_group]
 
     if pathname == '/overview':
-        # Page 1 content
-        #return overview.update_get_figure_layout(filtered_df)
-        #ov_Fig1Test(filtered_df,template)
         return BuildGetOverviewLayout(filtered_df,template)
 
     elif pathname == '/attackmethod':
-        # Page 2 content
-        fig3 = px.pie(filtered_df, names='Country', values='NVictimsKilled', title='Attack Methodology - Value1',template=template)
-        fig4 = px.pie(filtered_df, names='Country', values='NVictimsWounded', title='Attack Methodology - Value2')
-        return [dcc.Graph(figure=fig3), dcc.Graph(figure=fig4)]
+        return BuildGetAttackLayout(filtered_df,template)
 
     elif pathname == '/geo':
-        # Page 3 content
-        fig5 = px.scatter_geo(filtered_df, locations='Country', size='NVictimsKilled', title='Geographical - Value1')
-        fig6 = px.scatter_geo(filtered_df, locations='Country', size='NVictimsWounded', title='Geographical - Value2')
-        return [dcc.Graph(figure=fig5), dcc.Graph(figure=fig6)]
+        return BuildGetGeoLayout(filtered_df,template)
 
 ############################################ Callback to update active state of NavLinks and highlight them
 @app.callback(
