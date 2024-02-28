@@ -120,6 +120,33 @@ def ov_stacked_area_chart_casualties2(df, template):
     subplot.update_layout(template=template, margin={"r": 5, "t": 20, "l": 5, "b": 5})
     return subplot
 
+def ov_kill_wounded(df, template):
+    # Todo can do this with one dataset
+    df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
+    df_attacks = df.groupby('Year').size().reset_index(name='Attacks')
+
+    fig_line = px.line(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
+                       labels={'value': 'Number of Victims', 'variable': 'Type'},
+                       title='', color_discrete_sequence=[t_light_green, t_green],
+                       template=template)
+
+    for trace in fig_line.data:
+        trace.name = trace.name.replace("NVictims", "")
+
+    fig_bar = go.Figure(go.Bar(x=df_attacks['Year'],
+                               y=df_attacks['Attacks'], name='Events', marker_color=t_bluegray))
+    fig_bar.update_layout(showlegend=False)
+
+    subplot = sp.make_subplots(rows=2, cols=1, shared_xaxes=True,
+                               vertical_spacing=0.2, subplot_titles=['Casualties', 'Attack Frequency'])
+
+    for trace in fig_line.data:
+        subplot.add_trace(trace, row=1, col=1)
+    subplot.add_trace(fig_bar.data[0], row=2, col=1)
+
+    subplot.update_layout(template=template, margin={"r": 5, "t": 20, "l": 5, "b": 5})
+    return subplot
+
 def line_polar_attack_types(df,template):
     # Melt the DataFrame
     df_melted = pd.melt(df, value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
@@ -233,7 +260,7 @@ def BuildGetOverviewLayout(filtered_df,template):
         ],style={'margin-top': row_marg}), 
 
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '250px'}),width=9),
+            dbc.Col(dcc.Graph(figure=ov_kill_wounded(filtered_df,template), style={'height': '250px'}),width=9),
             dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '250px'}),width=3),
         ], style={'margin-top': row_marg}),
 
