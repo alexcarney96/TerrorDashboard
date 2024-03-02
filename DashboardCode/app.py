@@ -289,17 +289,17 @@ def at_area_chart(df,template,c_val):
 
 def at_area_chart_tabs(filtered_df,template):
     return dbc.Tabs([
-        dbc.Tab(label='Attack Method Evolution',active_label_style={'color' : t_green}, children=[
+        dbc.Tab(label='Attack Method Evolution',tab_id='Attack',active_label_style={'color' : t_green}, children=[
             dcc.Graph(figure=at_area_chart(filtered_df, template,'Attack')),
         ]),
 
-        dbc.Tab(label='Target Selection Evolution',active_label_style={'color' : t_green}, children=[
+        dbc.Tab(label='Target Selection Evolution',tab_id='Target',active_label_style={'color' : t_green}, children=[
             dcc.Graph(figure=at_area_chart(filtered_df, template,'Target'))
         ]),
-        dbc.Tab(label='Weapon Usage Evolution',active_label_style={'color' : t_green}, children=[
+        dbc.Tab(label='Weapon Usage Evolution',tab_id='Weapon',active_label_style={'color' : t_green}, children=[
             dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'))
         ]), 
-    ])
+    ],active_tab='Attack')
 
 def at_sui_attack_gauge(df, template):
     # Calculate attack success rate (assuming 'AttackSuccess' is a column in the DataFrame)
@@ -364,6 +364,7 @@ def at_cas_stacked_bar_chart(filtered_df, template):
     )
     return fig
 
+#######
 def BuildGetAttackLayout(filtered_df,template):
     row_marg ='25px'
     ind_height = '150px'
@@ -409,7 +410,7 @@ navbar = dbc.NavbarSimple(
             style={'width': '400px'}
         ),
         dbc.NavItem(dbc.NavLink("Group Overview", href="/overview", active=True, id='overview-link')),
-        dbc.NavItem(dbc.NavLink("Attack Methodology", href="/attackmethod", active=False, id='attackmethod-link')),
+        dbc.NavItem(dbc.NavLink("Attack Behavior", href="/attackmethod", active=False, id='attackmethod-link')),
         dbc.NavItem(dbc.NavLink("Geographical", href="/geo", active=False, id='geo-link')),
     ],
     brand="Global Terrorism Perpetrators",
