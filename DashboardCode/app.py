@@ -21,8 +21,8 @@ t_colors = [t_green,t_light_green,t_bluegray]
 
 ######################################################################################## Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.CYBORG, dbc_css])
-template = "cyborg"
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY, dbc_css])
+template = "darkly" #"cyborg"
 load_figure_template(template)
 
 ############################################################################# Loading data and making Group index for performance                   
@@ -254,24 +254,6 @@ def BuildGetOverviewLayout(filtered_df,template):
 
 
 #####################################################################################Build Attack page
-def at_top_method(df):
-
-    df_melted = pd.melt(df, value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
-                        var_name='AttackTypeCol', value_name='AttackTypeValue')
-    df_melted = df_melted.dropna(subset=['AttackTypeValue'])
-    grouped_df = df_melted.groupby("AttackTypeValue").size().reset_index(name="frequency")
-    most_common = grouped_df.sort_values(by='frequency', ascending=False).iloc[0]['AttackTypeValue']
-
-    
-
-    total_victims_killed = df['NVictimsKilled'].sum(skipna=True)
-
-
-    return fig
-
-
-
-
 def at_area_chart(df,template,c_val):
     val_vars, _title,_legend_title = None,None,None
     if (c_val == 'Weapon'):
@@ -306,19 +288,15 @@ def at_area_chart(df,template,c_val):
     return fig
 
 def at_area_chart_tabs(filtered_df,template):
-    
-    return dcc.Tabs([
-        dcc.Tab(label='Attack Method Evolution', children=[
-            dbc.Row([
-            dbc.Col(dcc.Graph(figure=at_area_chart(filtered_df, template,'Attack')),width=8),
-            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template)),width=4)
-            ])
+    return dbc.Tabs([
+        dbc.Tab(label='Attack Method Evolution',active_label_style={'color' : t_green}, children=[
+            dcc.Graph(figure=at_area_chart(filtered_df, template,'Attack')),
         ]),
 
-        dcc.Tab(label='Target Selection Evolution', children=[
+        dbc.Tab(label='Target Selection Evolution',active_label_style={'color' : t_green}, children=[
             dcc.Graph(figure=at_area_chart(filtered_df, template,'Target'))
         ]),
-        dcc.Tab(label='Weapon Usage Evolution', children=[
+        dbc.Tab(label='Weapon Usage Evolution',active_label_style={'color' : t_green}, children=[
             dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'))
         ]), 
     ])
@@ -343,32 +321,45 @@ def at_sui_attack_gauge(df, template):
 
     return fig
 
-def at_cas_stacked_bar_chart(filtered_df,template):
-    df_melted = pd.melt(filtered_df,id_vars=['NVictimsKilled','NVictimsWounded','Casualties'],
-                        value_vars=['AttackType1','AttackType2','AttackType3'],
+
+def at_cas_stacked_bar_chart(filtered_df, template):
+    df_melted = pd.melt(filtered_df, id_vars=['NVictimsKilled', 'NVictimsWounded', 'Casualties'],
+                        value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
                         var_name='AttackTypeCol', value_name='AttackType')
     df_melted = df_melted.dropna(subset=['AttackType'])
-    df_melted = df_melted[df_melted['AttackType']!='Unknown']
-    df_melted = df_melted[df_melted['AttackType']!='Other']
-    df_summed = df_melted.groupby('AttackType').agg({'NVictimsWounded': 'sum', 
-                                                        'NVictimsKilled': 'sum',
-                                                        'Casualties' :'sum'}).reset_index()
-    top_5_df = df_melted.groupby('AttackType').size().reset_index(name='NumAttacks').sort_values(by='NumAttacks', ascending=False).head(5)
+    df_melted = df_melted[df_melted['AttackType'] != 'Unknown']
+    df_melted = df_melted[df_melted['AttackType'] != 'Other']
+    df_summed = df_melted.groupby('AttackType').agg({'NVictimsWounded': 'sum',
+                                                      'NVictimsKilled': 'sum',
+                                                      'Casualties': 'sum'}).reset_index()
+    top_5_df = df_melted.groupby('AttackType').size().reset_index(name='NumAttacks').sort_values(by='NumAttacks',
+                                                                                                   ascending=False).head(
+        5)
     top_5 = top_5_df['AttackType'].unique()
     df_summed = df_summed[df_summed['AttackType'].isin(top_5)]
-    df_summed = df_summed[df_summed['Casualties']>0]
+    df_summed = df_summed[(df_summed['NVictimsKilled'] > 0) | (df_summed['NVictimsWounded'] > 0)]
 
-    fig = px.bar(df_summed, x="AttackType", y=['NVictimsKilled','NVictimsWounded'],
-                 title="Casualties by Top 5 Attack Methods",
-                 color_discrete_map={'NVictimsWounded': t_light_green, 'NVictimsKilled': t_green}
+    #percentage of killed and wounded relative to total casualties
+    df_summed['PercentKilled'] = (df_summed['NVictimsKilled'] / (df_summed['NVictimsKilled']+df_summed['NVictimsWounded'])) * 100
+    df_summed['PercentWounded'] = (df_summed['NVictimsWounded'] / (df_summed['NVictimsKilled']+df_summed['NVictimsWounded'])) * 100
+
+    fig = px.bar(df_summed, x="AttackType", y=['PercentKilled', 'PercentWounded'],
+                 title="Lethality of Top 5 Attack Methods",
+                 color_discrete_map={'PercentWounded': t_light_green, 'PercentKilled': t_green}
                  )
     for trace in fig.data:
-        trace.name = trace.name.replace("NVictims", "")    
+        trace.name = trace.name.replace("Percent", "% ")
+
     fig.update_layout(
         xaxis_title='',
-        yaxis_title='Casualties',
+        yaxis_title='% of Total Casualties',
         legend_title='',
         template=template,
+        yaxis=dict(
+            tickmode='array',
+            tickvals=list(range(0, 101, 10)),
+            ticktext=[f"{percent}%" for percent in range(0, 101, 10)],
+        ),
         margin={"r": 5, "t": 30, "l": 5, "b": 5}
     )
     return fig
@@ -380,10 +371,8 @@ def BuildGetAttackLayout(filtered_df,template):
     pie_height= '350px'
     return [
         dbc.Row([
-            #dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': '450px'}),width=6),
-            
-            #dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': '250px'}),width=3),
-            dbc.Col(dcc.Graph(figure=TestHM())),
+            dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': '250px'}),width=8),
+            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': '250px'}),width=4),
             
         ], style={'margin-top': row_marg}),
 
