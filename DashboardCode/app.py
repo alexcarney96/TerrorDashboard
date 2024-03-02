@@ -269,6 +269,9 @@ def at_top_method(df):
 
     return fig
 
+
+
+
 def at_area_chart(df,template,c_val):
     val_vars, _title,_legend_title = None,None,None
     if (c_val == 'Weapon'):
@@ -306,14 +309,18 @@ def at_area_chart_tabs(filtered_df,template):
     
     return dcc.Tabs([
         dcc.Tab(label='Attack Method Evolution', children=[
-            dcc.Graph(figure=at_area_chart(filtered_df, template,'Attack'))
+            dbc.Row([
+            dbc.Col(dcc.Graph(figure=at_area_chart(filtered_df, template,'Attack')),width=8),
+            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template)),width=4)
+            ])
         ]),
-        dcc.Tab(label='Weapon Usage Evolution', children=[
-            dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'))
-        ]),       
+
         dcc.Tab(label='Target Selection Evolution', children=[
             dcc.Graph(figure=at_area_chart(filtered_df, template,'Target'))
         ]),
+        dcc.Tab(label='Weapon Usage Evolution', children=[
+            dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'))
+        ]), 
     ])
 
 def at_sui_attack_gauge(df, template):
@@ -336,6 +343,36 @@ def at_sui_attack_gauge(df, template):
 
     return fig
 
+def at_cas_stacked_bar_chart(filtered_df,template):
+    df_melted = pd.melt(filtered_df,id_vars=['NVictimsKilled','NVictimsWounded','Casualties'],
+                        value_vars=['AttackType1','AttackType2','AttackType3'],
+                        var_name='AttackTypeCol', value_name='AttackType')
+    df_melted = df_melted.dropna(subset=['AttackType'])
+    df_melted = df_melted[df_melted['AttackType']!='Unknown']
+    df_melted = df_melted[df_melted['AttackType']!='Other']
+    df_summed = df_melted.groupby('AttackType').agg({'NVictimsWounded': 'sum', 
+                                                        'NVictimsKilled': 'sum',
+                                                        'Casualties' :'sum'}).reset_index()
+    top_5_df = df_melted.groupby('AttackType').size().reset_index(name='NumAttacks').sort_values(by='NumAttacks', ascending=False).head(5)
+    top_5 = top_5_df['AttackType'].unique()
+    df_summed = df_summed[df_summed['AttackType'].isin(top_5)]
+    df_summed = df_summed[df_summed['Casualties']>0]
+
+    fig = px.bar(df_summed, x="AttackType", y=['NVictimsKilled','NVictimsWounded'],
+                 title="Casualties by Top 5 Attack Methods",
+                 color_discrete_map={'NVictimsWounded': t_light_green, 'NVictimsKilled': t_green}
+                 )
+    for trace in fig.data:
+        trace.name = trace.name.replace("NVictims", "")    
+    fig.update_layout(
+        xaxis_title='',
+        yaxis_title='Casualties',
+        legend_title='',
+        template=template,
+        margin={"r": 5, "t": 30, "l": 5, "b": 5}
+    )
+    return fig
+
 def BuildGetAttackLayout(filtered_df,template):
     row_marg ='25px'
     ind_height = '150px'
@@ -343,7 +380,11 @@ def BuildGetAttackLayout(filtered_df,template):
     pie_height= '350px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': '250px'}),width=4)
+            #dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': '450px'}),width=6),
+            
+            #dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': '250px'}),width=3),
+            dbc.Col(dcc.Graph(figure=TestHM())),
+            
         ], style={'margin-top': row_marg}),
 
         dbc.Row([ 
@@ -405,10 +446,6 @@ app.layout = dbc.Container(
                Input('group-dropdown', 'value')])
 def update_page_content(pathname, selected_group):
     filtered_df = raw_df[raw_df.index == selected_group]
-
-    #ov = BuildGetOverviewLayout(filtered_df,template)
-    #at = BuildGetAttackLayout(filtered_df,template)
-    #geo = BuildGetGeoLayout(filtered_df,template)
     if pathname == '/overview':
         return BuildGetOverviewLayout(filtered_df,template)
 
