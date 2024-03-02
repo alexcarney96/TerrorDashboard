@@ -93,32 +93,6 @@ def ov_victims_killed_indicator(df):
 
     return fig
 
-def ov_stacked_area_chart_casualties2(df, template):
-    #Todo can do this with one dataset
-    df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
-    df_attacks = df.groupby('Year').size().reset_index(name='Attacks')
-
-    fig = px.area(df_summed, x='Year', y=['NVictimsWounded', 'NVictimsKilled'],
-                  labels={'value': 'Number of Victims', 'variable': 'Type'},
-                  title='', color_discrete_sequence=[t_light_green, t_green],
-                  template=template)
-
-    for trace in fig.data:
-        trace.name = trace.name.replace("NVictims", "")
-
-    fig_bar = go.Figure(go.Bar(x=df_attacks['Year'], 
-                               y=df_attacks['Attacks'], name='Events',marker_color=t_bluegray))
-    fig_bar.update_layout(showlegend=False)
-
-    subplot = sp.make_subplots(rows=2, cols=1, shared_xaxes=True, 
-                               vertical_spacing=0.2, subplot_titles=['Casualties', 'Attack Frequency'])
-
-    for trace in fig.data:
-        subplot.add_trace(trace, row=1, col=1)
-    subplot.add_trace(fig_bar.data[0], row=2, col=1)
-
-    subplot.update_layout(template=template, margin={"r": 5, "t": 20, "l": 5, "b": 5})
-    return subplot
 
 def ov_kill_wounded(df, template):
     # Todo can do this with one dataset
@@ -204,7 +178,8 @@ def ov_targetTypeBar(df,template):
                  title='Top 5 Target Types',color_discrete_sequence=[t_green],
                 template=template) 
     fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''),
-                      margin={"r":5,"t":40,"l":5,"b":5})
+                      margin={"r":5,"t":40,"l":5,"b":5}
+                      )
     return fig
 
 def ov_attacks_by_country_choropleth(df, template):
@@ -279,34 +254,103 @@ def BuildGetOverviewLayout(filtered_df,template):
 
 
 #####################################################################################Build Attack page
-def scatter(df, template):
-    data=[[1, 25, 30, 50, 1], [20, 1, 60, 80, 30], [30, 60, 1, 5, 20]]
-    fig = px.scatter(x=data[0], y=data[1])
+def at_top_method(df):
+
+    df_melted = pd.melt(df, value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
+                        var_name='AttackTypeCol', value_name='AttackTypeValue')
+    df_melted = df_melted.dropna(subset=['AttackTypeValue'])
+    grouped_df = df_melted.groupby("AttackTypeValue").size().reset_index(name="frequency")
+    most_common = grouped_df.sort_values(by='frequency', ascending=False).iloc[0]['AttackTypeValue']
+
+    
+
+    total_victims_killed = df['NVictimsKilled'].sum(skipna=True)
+
+
     return fig
 
+def at_area_chart(df,template,c_val):
+    val_vars, _title,_legend_title = None,None,None
+    if (c_val == 'Weapon'):
+        val_vars = ['WeaponType1','WeaponType2','WeaponType3']
+        _title = 'Top 5 Most Used Weapons Over Time'
+        _legend_title = 'Weapons Choice Evolution'
+    if (c_val == 'Attack'):
+        val_vars = ['AttackType1','AttackType2','AttackType3']
+        _title = 'Top 5 Attack Methods Over Time'
+        _legend_title = 'Attack Method Evolution'
+    if (c_val == 'Target'):
+        val_vars = ['TargetType1','TargetType2','TargetType3']
+        _title = 'Top 5 Targets Over Time'
+        _legend_title = 'Target Method Evolution'
 
+    df_melted = pd.melt(df,id_vars=['Year'],value_vars=val_vars,
+                        var_name='TypeCol', value_name='TypeValue')
+    df_melted = df_melted.dropna(subset=['TypeValue'])
+    df_melted = df_melted[df_melted['TypeValue']!='Unknown']
+    df_melted = df_melted[df_melted['TypeValue']!='Other']
 
+    top_5_df = df_melted.groupby('TypeValue').size().reset_index(name='NumAttacks').sort_values(by='NumAttacks', ascending=False).head(5)
+    top_5 = top_5_df['TypeValue'].unique()
+
+    grouped_df = df_melted.groupby(['Year', 'TypeValue']).size().reset_index(name='NumAttacks')
+    grouped_df = grouped_df[grouped_df['TypeValue'].isin(top_5)]
+
+    fig = px.area(grouped_df, x='Year', y='NumAttacks', color='TypeValue',
+                    title=_title,
+                    template=template)
+    fig.update_layout(legend_title_text=_legend_title,yaxis_title='Attacks')
+    return fig
+
+def at_area_chart_tabs(filtered_df,template):
+    
+    return dcc.Tabs([
+        dcc.Tab(label='Attack Method Evolution', children=[
+            dcc.Graph(figure=at_area_chart(filtered_df, template,'Attack'))
+        ]),
+        dcc.Tab(label='Weapon Usage Evolution', children=[
+            dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'))
+        ]),       
+        dcc.Tab(label='Target Selection Evolution', children=[
+            dcc.Graph(figure=at_area_chart(filtered_df, template,'Target'))
+        ]),
+    ])
+
+def at_sui_attack_gauge(df, template):
+    # Calculate attack success rate (assuming 'AttackSuccess' is a column in the DataFrame)
+    success_rate = (df['SuicideAttack'].sum() / len(df)) * 100
+
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=success_rate,
+        number=dict(suffix='%'),
+        title={'text': "Suicide Attack Rate"},
+        gauge=dict(
+            axis=dict(range=[0, 100]),
+            bar=dict(color=t_green),
+        )
+    ))
+    fig.update_layout(
+        template=template,
+    )
+
+    return fig
 
 def BuildGetAttackLayout(filtered_df,template):
     row_marg ='25px'
     ind_height = '150px'
     meth_height = '450px'
+    pie_height= '350px'
     return [
-        dbc.Row([ 
-            dbc.Col(dcc.Graph(figure=scatter(filtered_df,template), style={'height': '450px'}),width=12),
-            #dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '450px'}),width=2),
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': '250px'}),width=4)
         ], style={'margin-top': row_marg}),
 
-        dbc.Row([
-            dbc.Col(dcc.Graph(figure=ov_attacks_by_country_choropleth(filtered_df,template), style={'height': meth_height}),width=8),
-            dbc.Col(
-                children = [
-                dcc.Graph(figure=line_polar_attack_types(filtered_df,template), style={'height': '225px'}),
-                dcc.Graph(figure=ov_targetTypeBar(filtered_df,template), style={'height': '225px'})
-                ],width=4),
-            
-            
+        dbc.Row([ 
+            dbc.Col(at_area_chart_tabs(filtered_df,template),width=12),
         ], style={'margin-top': row_marg}),
+
+
 
     ]
 
@@ -318,7 +362,7 @@ def BuildGetGeoLayout(filtered_df,template):
     row_marg ='25px'
     return [
         dbc.Row([ 
-            dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '250px'}),width=9),
+            #dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '250px'}),width=9),
             dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '250px'}),width=3),
         ], style={'margin-top': row_marg}),
 
