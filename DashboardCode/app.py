@@ -223,7 +223,7 @@ def ov_attacks_by_country_choropleth(df, template):
 
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='25px'
-    ind_height = '150px'
+    ind_height = '130px'
     meth_height = '450px'
     return [
         dbc.Row([
@@ -284,20 +284,20 @@ def at_area_chart(df,template,c_val):
     fig = px.area(grouped_df, x='Year', y='NumAttacks', color='TypeValue',
                     title=_title,
                     template=template)
-    fig.update_layout(legend_title_text=_legend_title,yaxis_title='Attacks')
+    fig.update_layout(legend_title_text=_legend_title,yaxis_title='Attacks',margin={"r": 5, "t": 30, "l": 5, "b": 5})
     return fig
 
-def at_area_chart_tabs(filtered_df,template):
+def at_area_chart_tabs(filtered_df,template,height):
     return dbc.Tabs([
         dbc.Tab(label='Attack Method Evolution',tab_id='Attack',active_label_style={'color' : t_green}, children=[
-            dcc.Graph(figure=at_area_chart(filtered_df, template,'Attack')),
+            dcc.Graph(figure=at_area_chart(filtered_df, template,'Attack'),style={'height': height}),
         ]),
 
         dbc.Tab(label='Target Selection Evolution',tab_id='Target',active_label_style={'color' : t_green}, children=[
-            dcc.Graph(figure=at_area_chart(filtered_df, template,'Target'))
+            dcc.Graph(figure=at_area_chart(filtered_df, template,'Target'),style={'height': height})
         ]),
         dbc.Tab(label='Weapon Usage Evolution',tab_id='Weapon',active_label_style={'color' : t_green}, children=[
-            dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'))
+            dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'),style={'height': height})
         ]), 
     ],active_tab='Attack')
 
@@ -316,7 +316,7 @@ def at_sui_attack_gauge(df, template):
         )
     ))
     fig.update_layout(
-        template=template,
+        template=template,margin={"r": 25, "t": 55, "l": 25, "b": 25}
     )
 
     return fig
@@ -359,6 +359,7 @@ def at_cas_stacked_bar_chart(filtered_df, template):
             tickmode='array',
             tickvals=list(range(0, 101, 10)),
             ticktext=[f"{percent}%" for percent in range(0, 101, 10)],
+            tickfont=dict(size=10)
         ),
         margin={"r": 5, "t": 30, "l": 5, "b": 5}
     )
@@ -370,15 +371,16 @@ def BuildGetAttackLayout(filtered_df,template):
     ind_height = '150px'
     meth_height = '450px'
     pie_height= '350px'
+    bar_height = '185px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': '250px'}),width=8),
-            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': '250px'}),width=4),
+            dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': bar_height}),width=8),
+            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': bar_height}),width=4),
             
         ], style={'margin-top': row_marg}),
 
         dbc.Row([ 
-            dbc.Col(at_area_chart_tabs(filtered_df,template),width=12),
+            dbc.Col(at_area_chart_tabs(filtered_df,template,'270px'),width=12),
         ], style={'margin-top': row_marg}),
 
 
