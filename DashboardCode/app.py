@@ -316,7 +316,7 @@ def at_sui_attack_gauge(df, template):
         )
     ))
     fig.update_layout(
-        template=template,margin={"r": 30, "t": 55, "l": 30, "b": 25}
+        template=template,margin={"r": 10, "t": 55, "l": 10, "b": 10}
     )
 
     return fig
@@ -374,8 +374,8 @@ def at_atts_per_yr_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=rounded_average_attacks,
-        title={"text": "Attacks per Year", 'font': {'size': 26}},
-        number={'font': {'size': 24}, 'font_color' : t_green}
+        title={"text": "Attacks per Year", 'font': {'size': 20}},
+        number={'font': {'size': 20}, 'font_color' : t_green}
     ))
     return fig
 
@@ -390,8 +390,8 @@ def at_claimed_perc_indicator(df):
     fig.add_trace(go.Indicator(
         mode="number",
         value=percentage_claimed,
-        title={"text": "Attacks Claimed", 'font': {'size': 26}},
-        number={'suffix':'%','font': {'size': 24}, 'font_color' : t_green}
+        title={"text": "Attacks Claimed", 'font': {'size': 20}},
+        number={'suffix':'%','font': {'size': 20}, 'font_color' : t_green}
     ))
     return fig
 
@@ -411,24 +411,25 @@ def at_kpa_wpa_indicator(df,k_or_a):
         mode="number",
         value=rounded_average_killed_per_attack,
         #number=dict(suffix='%'),
-        title={"text": _title, 'font': {'size': 26}},
-        number={'font': {'size': 24}, 'font_color' : t_green}
+        title={"text": _title, 'font': {'size': 20}},
+        number={'font': {'size': 20}, 'font_color' : t_green}
     ))
     return fig
 
 #######
 def BuildGetAttackLayout(filtered_df,template):
     row_marg ='25px'
-    ind_height = '100px'#
+    ind_height = '125px'#
     meth_height = '450px'
     pie_height= '350px'
     bar_height = '185px'
     return [
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=at_atts_per_yr_indicator(filtered_df), style={'height': ind_height}),width=3),
-            dbc.Col(dcc.Graph(figure=at_claimed_perc_indicator(filtered_df), style={'height': ind_height}),width=3),
-            dbc.Col(dcc.Graph(figure=at_kpa_wpa_indicator(filtered_df,'Killed'), style={'height': ind_height}),width=3),
-            dbc.Col(dcc.Graph(figure=at_kpa_wpa_indicator(filtered_df,'Wounded'), style={'height': ind_height}),width=3),
+            dbc.Col(dcc.Graph(figure=at_atts_per_yr_indicator(filtered_df), style={'height': ind_height}),width=2),
+            dbc.Col(dcc.Graph(figure=at_claimed_perc_indicator(filtered_df), style={'height': ind_height}),width=2),
+            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': ind_height}),width=4),
+            dbc.Col(dcc.Graph(figure=at_kpa_wpa_indicator(filtered_df,'Killed'), style={'height': ind_height}),width=2),
+            dbc.Col(dcc.Graph(figure=at_kpa_wpa_indicator(filtered_df,'Wounded'), style={'height': ind_height}),width=2),
             
         ], style={'margin-top': row_marg}),
 
