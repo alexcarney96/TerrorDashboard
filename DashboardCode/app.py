@@ -223,7 +223,7 @@ def ov_attacks_by_country_choropleth(df, template):
 
 def BuildGetOverviewLayout(filtered_df,template):
     row_marg ='25px'
-    ind_height = '130px'
+    ind_height = '100px'
     meth_height = '450px'
     return [
         dbc.Row([
@@ -316,7 +316,7 @@ def at_sui_attack_gauge(df, template):
         )
     ))
     fig.update_layout(
-        template=template,margin={"r": 25, "t": 55, "l": 25, "b": 25}
+        template=template,margin={"r": 30, "t": 55, "l": 30, "b": 25}
     )
 
     return fig
@@ -365,14 +365,73 @@ def at_cas_stacked_bar_chart(filtered_df, template):
     )
     return fig
 
+def at_atts_per_yr_indicator(df):
+    attacks_per_year = df['Year'].value_counts().reset_index()
+    attacks_per_year.columns = ['Year', 'NumAttacks']
+    average_attacks_per_year = attacks_per_year['NumAttacks'].mean()
+    rounded_average_attacks = round(average_attacks_per_year, 1)
+    fig = go.Figure()
+    fig.add_trace(go.Indicator(
+        mode="number",
+        value=rounded_average_attacks,
+        title={"text": "Attacks per Year", 'font': {'size': 26}},
+        number={'font': {'size': 24}, 'font_color' : t_green}
+    ))
+    return fig
+
+def at_claimed_perc_indicator(df):
+    total_attacks = len(df)
+    claimed_attacks = df['GroupClaimed'].sum()
+
+    percentage_claimed = (claimed_attacks / total_attacks) * 100
+    percentage_claimed = round(percentage_claimed, 1)
+    fig = go.Figure()
+
+    fig.add_trace(go.Indicator(
+        mode="number",
+        value=percentage_claimed,
+        title={"text": "Attacks Claimed", 'font': {'size': 26}},
+        number={'suffix':'%','font': {'size': 24}, 'font_color' : t_green}
+    ))
+    return fig
+
+def at_kpa_wpa_indicator(df,k_or_a):
+    rounded_average_killed_per_attack = None
+    _title = ''
+    if (k_or_a == 'Killed'):
+        average_killed_per_attack = df['NVictimsKilled'].mean()
+        rounded_average_killed_per_attack = round(average_killed_per_attack, 1)
+        _title = 'Killed Per Attack'
+    if (k_or_a == 'Wounded'):
+        average_killed_per_attack = df['NVictimsWounded'].mean()
+        rounded_average_killed_per_attack = round(average_killed_per_attack, 1)
+        _title = 'Wounded Per Attack'     
+    fig = go.Figure()
+    fig.add_trace(go.Indicator(
+        mode="number",
+        value=rounded_average_killed_per_attack,
+        #number=dict(suffix='%'),
+        title={"text": _title, 'font': {'size': 26}},
+        number={'font': {'size': 24}, 'font_color' : t_green}
+    ))
+    return fig
+
 #######
 def BuildGetAttackLayout(filtered_df,template):
     row_marg ='25px'
-    ind_height = '150px'
+    ind_height = '100px'#
     meth_height = '450px'
     pie_height= '350px'
     bar_height = '185px'
     return [
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=at_atts_per_yr_indicator(filtered_df), style={'height': ind_height}),width=3),
+            dbc.Col(dcc.Graph(figure=at_claimed_perc_indicator(filtered_df), style={'height': ind_height}),width=3),
+            dbc.Col(dcc.Graph(figure=at_kpa_wpa_indicator(filtered_df,'Killed'), style={'height': ind_height}),width=3),
+            dbc.Col(dcc.Graph(figure=at_kpa_wpa_indicator(filtered_df,'Wounded'), style={'height': ind_height}),width=3),
+            
+        ], style={'margin-top': row_marg}),
+
         dbc.Row([
             dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': bar_height}),width=8),
             dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': bar_height}),width=4),
