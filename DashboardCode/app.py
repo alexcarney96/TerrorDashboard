@@ -296,9 +296,9 @@ def at_area_chart_tabs(filtered_df,template,height):
         dbc.Tab(label='Target Selection Evolution',tab_id='Target',active_label_style={'color' : t_green}, children=[
             dcc.Graph(figure=at_area_chart(filtered_df, template,'Target'),style={'height': height})
         ]),
-        dbc.Tab(label='Weapon Usage Evolution',tab_id='Weapon',active_label_style={'color' : t_green}, children=[
-            dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'),style={'height': height})
-        ]), 
+        #dbc.Tab(label='Weapon Usage Evolution',tab_id='Weapon',active_label_style={'color' : t_green}, children=[
+        #    dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'),style={'height': height})
+        #]), 
     ],active_tab='Attack')
 
 def at_sui_attack_gauge(df, template):
@@ -380,9 +380,9 @@ def at_atts_per_yr_indicator(df):
     return fig
 
 def at_claimed_perc_indicator(df):
-    total_attacks = len(df)
-    claimed_attacks = df['GroupClaimed'].sum()
-
+    _df = df[df['GroupClaimed']>=0]
+    claimed_attacks = _df['GroupClaimed'].sum()
+    total_attacks = len(_df)
     percentage_claimed = (claimed_attacks / total_attacks) * 100
     percentage_claimed = round(percentage_claimed, 1)
     fig = go.Figure()
@@ -472,7 +472,7 @@ navbar = dbc.NavbarSimple(
             style={'width': '400px'}
         ),
         dbc.NavItem(dbc.NavLink("Group Overview", href="/overview", active=True, id='overview-link')),
-        dbc.NavItem(dbc.NavLink("Attack Behavior", href="/attackmethod", active=False, id='attackmethod-link')),
+        dbc.NavItem(dbc.NavLink("Attack Profile", href="/attackmethod", active=False, id='attackmethod-link')),
         dbc.NavItem(dbc.NavLink("Geographical", href="/geo", active=False, id='geo-link')),
     ],
     brand="Global Terrorism Perpetrators",
