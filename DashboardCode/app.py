@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.subplots as sp
 import colorsys
+import numpy as np
 
 
 ######################################Build and define some custom colors
@@ -416,7 +417,97 @@ def at_kpa_wpa_indicator(df,k_or_a):
     ))
     return fig
 
+#constant is Targets, Target Type, Attack Method
+#values = num events, color = casualties
+def at_treemap(df,template):
+    _df = df.copy()
+    _df['row_counter'] = 1
+    df_melted = pd.melt(_df, id_vars=['NVictimsKilled', 'NVictimsWounded', 'Casualties','row_counter'],
+                        value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
+                        var_name='AttackTypeCol', value_name='AttackType')
+    df_melted = df_melted.dropna(subset=['AttackType'])
+    df_melted = df_melted[df_melted['AttackType'] != 'Unknown']
+    df_melted = df_melted[df_melted['AttackType'] != 'Other']
+    df_summed = df_melted.groupby('AttackType').agg({'NVictimsWounded': 'sum',
+                                                      'NVictimsKilled': 'sum',
+                                                      'Casualties': 'sum'}).reset_index()
+    top_5_df = df_melted.groupby('AttackType').size().reset_index(name='NumAttacks').sort_values(by='NumAttacks',
+                                                                                                   ascending=False).head(5)
+    top_5 = top_5_df['AttackType'].unique()
+    df_summed = df_summed[df_summed['AttackType'].isin(top_5)]
+    df_summed = df_summed[(df_summed['NVictimsKilled'] > 0) | (df_summed['NVictimsWounded'] > 0)]
+
+    #
+
+def testTreemap():
+    df = px.data.gapminder().query("year == 2007")
+    fig = px.treemap(df, path=[px.Constant("world"), 'continent', 'country'], values='pop',
+                  color='lifeExp', hover_data=['iso_alpha'],
+                  color_continuous_scale='RdBu',
+                  color_continuous_midpoint=np.average(df['lifeExp'], weights=df['pop']))
+    fig.update_layout(margin = dict(t=50, l=25, r=25, b=25))
+    return fig
+
+
+####
+def at_treemap_helper(df,in_str):
+    #just melts
+    val_vars,var_nm,value_nm = [],'',''
+    if (in_str == 'AttackType'): 
+        val_vars = ['AttackType1', 'AttackType2', 'AttackType3']
+        var_nm ='AttackTypeCol'
+        value_nm ='AttackType'
+    if (in_str == 'TargetType'): 
+        val_vars = ['TargetType1', 'TargetType2', 'TargetType3']
+        var_nm ='TargetTypeCol'
+        value_nm ='TargetType'
+    ret = pd.melt(df, id_vars=['EventID','Casualties'],
+                        value_vars=val_vars,
+                        var_name=var_nm, value_name=value_nm)
+    ret = ret.dropna(subset=[value_nm])
+    return ret
+    
+
+def at_TreeMap(df,template):
+    '''
+    px.Constant(Targets)v
+    TargetType, AttackType,NumEvents|Casualties values=Numevents, colored by Casualties (merged on eventid)
+    '''
+    #TARG_DF cols : TargetType, EventID, Casualties
+    #ATT_DF cols : AttackType, EventID, Casualties
+    targ_df = at_treemap_helper(df,'TargetType')# 
+    att_df = at_treemap_helper(df,'AttackType')
+    targ_df = targ_df[targ_df['TargetType'] != 'Unknown']
+    targ_df = targ_df[targ_df['TargetType'] != 'Other']
+    att_df = att_df[att_df['AttackType'] != 'Unknown']
+    att_df = att_df[att_df['AttackType'] != 'Other']
+
+    #top 5 targets only
+    top_5_df = targ_df.groupby('TargetType').size().reset_index(name='NumAttacks').sort_values(by='NumAttacks',
+                                                                                           ascending=False).head(5)
+    top_5_targs = top_5_df['TargetType'].unique()
+    targ_df = targ_df[targ_df['TargetType'].isin(top_5_targs)]
+    
+    #join on the attack data
+    merged_df = pd.merge(targ_df, att_df[['EventID', 'AttackType']], on='EventID', how='left')
+    merged_df['Casualties'] = merged_df['Casualties'].fillna(0)
+    #MERGED_DF : EventID, TargetType, AttackType, Casualties
+    grouped_df = merged_df.groupby(['TargetType', 'AttackType']).agg({
+    'Casualties': 'sum',
+    'EventID': 'count'
+    }).reset_index()
+
+    grouped_df = grouped_df.rename(columns={'EventID': 'Attacks'})
+    print(grouped_df)
+    #GROUPED_DF has columns : TargetType,AttackType,Casualties,NumOccurences
+    fig = px.treemap(grouped_df, path=[px.Constant("Top 5 Targets"), 'TargetType', 'AttackType'], values='Attacks',
+                  color='Casualties',
+                  color_continuous_scale='RdBu',
+                  color_continuous_midpoint=np.average(grouped_df['Casualties'], weights=grouped_df['Attacks']))
+    fig.update_layout(margin = dict(t=50, l=25, r=25, b=25),template=template)
+    return fig   
 #######
+    
 def BuildGetAttackLayout(filtered_df,template):
     row_marg ='25px'
     ind_height = '125px'#
@@ -432,7 +523,10 @@ def BuildGetAttackLayout(filtered_df,template):
             dbc.Col(dcc.Graph(figure=at_kpa_wpa_indicator(filtered_df,'Wounded'), style={'height': ind_height}),width=2),
             
         ], style={'margin-top': row_marg}),
-
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=at_TreeMap(filtered_df,template), style={'height': meth_height}),width=12),
+            
+        ], style={'margin-top': row_marg}),
         dbc.Row([
             dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': bar_height}),width=8),
             dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': bar_height}),width=4),

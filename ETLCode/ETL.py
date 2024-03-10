@@ -116,6 +116,7 @@ def LongifyByGroup(df):
     #Combine into a long dataset
     long_df = pd.concat([grp1_df, grp2_df, grp3_df], axis=0, ignore_index=True)
     long_df['Casualties'] = long_df['NVictimsKilled'] + long_df['NVictimsWounded']
+    long_df['Casualties'] = long_df['Casualties'].fillna(long_df['NVictimsKilled']).fillna(long_df['NVictimsWounded'])
     return long_df
 
 def SetDatatypesAndSort(df):
