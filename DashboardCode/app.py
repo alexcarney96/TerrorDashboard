@@ -19,6 +19,10 @@ t_light_green = '#b1dba0'
 t_bluegray ='#36413e'
 t_colors = [t_green,t_light_green,t_bluegray]
 
+color_scale = [
+        [0, t_light_green],
+        [1, t_green]
+    ]
 
 ######################################################################################## Build our app  
 dbc_css = ("https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css")
@@ -184,10 +188,7 @@ def ov_targetTypeBar(df,template):
     return fig
 
 def ov_attacks_by_country_choropleth(df, template):
-    color_scale = [
-        [0, t_light_green],
-        [1, t_green]
-    ]
+
 
     # Calculate the attack count by country
     attacks_df = df.groupby("Country").size().reset_index(name="attacks")
@@ -344,7 +345,7 @@ def at_cas_stacked_bar_chart(filtered_df, template):
     df_summed['PercentKilled'] = (df_summed['NVictimsKilled'] / (df_summed['NVictimsKilled']+df_summed['NVictimsWounded'])) * 100
     df_summed['PercentWounded'] = (df_summed['NVictimsWounded'] / (df_summed['NVictimsKilled']+df_summed['NVictimsWounded'])) * 100
 
-    fig = px.bar(df_summed, x="AttackType", y=['PercentKilled', 'PercentWounded'],
+    fig = px.bar(df_summed, y="AttackType", x=['PercentKilled', 'PercentWounded'],
                  title="Lethality of Top 5 Attack Methods",
                  color_discrete_map={'PercentWounded': t_light_green, 'PercentKilled': t_green}
                  )
@@ -352,17 +353,17 @@ def at_cas_stacked_bar_chart(filtered_df, template):
         trace.name = trace.name.replace("Percent", "% ")
 
     fig.update_layout(
-        xaxis_title='',
-        yaxis_title='% of Total Casualties',
+        yaxis_title='',
+        xaxis_title='% of Total Casualties',
         legend_title='',
         template=template,
-        yaxis=dict(
+        xaxis=dict(
             tickmode='array',
             tickvals=list(range(0, 101, 10)),
             ticktext=[f"{percent}%" for percent in range(0, 101, 10)],
             tickfont=dict(size=10)
         ),
-        margin={"r": 5, "t": 30, "l": 5, "b": 5}
+        margin={"r": 0, "t": 30, "l": 0, "b": 5}
     )
     return fig
 
@@ -437,19 +438,7 @@ def at_treemap(df,template):
     df_summed = df_summed[df_summed['AttackType'].isin(top_5)]
     df_summed = df_summed[(df_summed['NVictimsKilled'] > 0) | (df_summed['NVictimsWounded'] > 0)]
 
-    #
 
-def testTreemap():
-    df = px.data.gapminder().query("year == 2007")
-    fig = px.treemap(df, path=[px.Constant("world"), 'continent', 'country'], values='pop',
-                  color='lifeExp', hover_data=['iso_alpha'],
-                  color_continuous_scale='RdBu',
-                  color_continuous_midpoint=np.average(df['lifeExp'], weights=df['pop']))
-    fig.update_layout(margin = dict(t=50, l=25, r=25, b=25))
-    return fig
-
-
-####
 def at_treemap_helper(df,in_str):
     #just melts
     val_vars,var_nm,value_nm = [],'',''
@@ -461,7 +450,7 @@ def at_treemap_helper(df,in_str):
         val_vars = ['TargetType1', 'TargetType2', 'TargetType3']
         var_nm ='TargetTypeCol'
         value_nm ='TargetType'
-    ret = pd.melt(df, id_vars=['EventID','Casualties'],
+    ret = pd.melt(df, id_vars=['EventID','Casualties','AttackSuccess'],
                         value_vars=val_vars,
                         var_name=var_nm, value_name=value_nm)
     ret = ret.dropna(subset=[value_nm])
@@ -502,18 +491,51 @@ def at_TreeMap(df,template):
     #GROUPED_DF has columns : TargetType,AttackType,Casualties,NumOccurences
     fig = px.treemap(grouped_df, path=[px.Constant("Top 5 Targets"), 'TargetType', 'AttackType'], values='Attacks',
                   color='Casualties',
-                  color_continuous_scale='RdBu',
+                  color_continuous_scale='Viridis',#'Viridis',#'RdBu',
                   color_continuous_midpoint=np.average(grouped_df['Casualties'], weights=grouped_df['Attacks']))
-    fig.update_layout(margin = dict(t=50, l=25, r=25, b=25),template=template)
+    fig.update_layout(margin = dict(t=50, l=25, r=25, b=25),template=template,title='Attack Profile of Top 5 Targets')
     return fig   
 #######
-    
+
+def at_bar_polar(df,template,in_str):
+    _title = ''
+    _col = ''
+    if(in_str == 'AttackType'):
+        _title = 'Top 5 Methods'
+        _col = 'AttackType'
+    if(in_str == 'TargetType'):
+        _title = 'Top 5 Targets'
+        _col = 'TargetType'
+    grp = at_treemap_helper(df,in_str)
+    grp  = grp[grp[_col] != 'Unknown']
+    grp  = grp[grp[_col] != 'Other']
+    top_5_df = grp.groupby(_col).size().reset_index(name='NumAttacks').sort_values(by='NumAttacks',
+                                                                                           ascending=False).head(5)
+    top_5_targs = top_5_df[_col].unique()
+    _df = grp[grp[_col].isin(top_5_targs)]
+
+    _df = _df.groupby(_col).size().reset_index(name="frequency")
+
+    #only inlcude the top 5
+    fig = px.bar_polar(_df, r="frequency",theta=_col,
+                        title = _title,
+                        color_discrete_sequence=[t_green], template=template
+                        )
+
+    fig.update_layout(polar=dict(radialaxis=dict(visible=True, showticklabels=False)), 
+                      showlegend=False,
+                      margin={"r":75,"t":30,"l":75,"b":30}
+                      )
+    return fig
+
+
+
 def BuildGetAttackLayout(filtered_df,template):
     row_marg ='25px'
     ind_height = '125px'#
     meth_height = '450px'
     pie_height= '350px'
-    bar_height = '185px'
+    bar_height = '215px'
     return [
         dbc.Row([
             dbc.Col(dcc.Graph(figure=at_atts_per_yr_indicator(filtered_df), style={'height': ind_height}),width=2),
@@ -524,20 +546,20 @@ def BuildGetAttackLayout(filtered_df,template):
             
         ], style={'margin-top': row_marg}),
         dbc.Row([
-            dbc.Col(dcc.Graph(figure=at_TreeMap(filtered_df,template), style={'height': meth_height}),width=12),
+            dbc.Col(dcc.Graph(figure=at_bar_polar(filtered_df,template,'TargetType'), style={'height': bar_height}),width=4),
+            dbc.Col(dcc.Graph(figure=at_bar_polar(filtered_df,template,'AttackType'), style={'height': bar_height}),width=4),
+            dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': bar_height}),width=4)
             
         ], style={'margin-top': row_marg}),
-        dbc.Row([
-            dbc.Col(dcc.Graph(figure=at_cas_stacked_bar_chart(filtered_df,template), style={'height': bar_height}),width=8),
-            dbc.Col(dcc.Graph(figure=at_sui_attack_gauge(filtered_df, template), style={'height': bar_height}),width=4),
-            
-        ], style={'margin-top': row_marg}),
-
+        
         dbc.Row([ 
             dbc.Col(at_area_chart_tabs(filtered_df,template,'270px'),width=12),
         ], style={'margin-top': row_marg}),
 
-
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=at_TreeMap(filtered_df,template), style={'height': '400px'}),width=12),
+            
+        ], style={'margin-top': row_marg}),
 
     ]
 
