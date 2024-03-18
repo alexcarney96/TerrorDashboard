@@ -576,7 +576,7 @@ def geo_attacks_map(df, template):
     fig = px.scatter_geo(merged_df, lat='Latitude',lon='Longitude', color="casualties",
                         hover_name="SubRegion", size="attacks",
                         animation_frame="Year",
-                        projection="natural earth",title="Attacks by Location by Time")
+                        projection="natural earth",title="Attacks by Location Over Time")
 
     fig.update_layout(
         autosize=False,
@@ -644,7 +644,7 @@ def geo_region_spread(df, template):
     fig_line = px.line(df_summed, x='Year', y=['Regions Attacked'],
                        labels={'value': 'Regions Attacked', 'variable': 'Type'},
                        
-                       title='Geographic Spread by Time', color_discrete_sequence=[t_light_green],
+                       title='Geographic Spread Over Time', color_discrete_sequence=[t_light_green],
                        template=template)
 
     fig_line.update_layout(template=template, margin={"r": 5, "t": 40, "l": 5, "b": 20},showlegend=False,xaxis_title=None,yaxis_title_font=dict(size=12))
