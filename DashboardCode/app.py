@@ -647,7 +647,7 @@ def geo_region_spread(df, template):
                        title='Geographic Spread by Time', color_discrete_sequence=[t_light_green],
                        template=template)
 
-    fig_line.update_layout(template=template, margin={"r": 5, "t": 40, "l": 5, "b": 5},showlegend=False,xaxis_title=None,)
+    fig_line.update_layout(template=template, margin={"r": 5, "t": 40, "l": 5, "b": 20},showlegend=False,xaxis_title=None,yaxis_title_font=dict(size=12))
     return fig_line
 
 def BuildGetGeoLayout(filtered_df,template):
