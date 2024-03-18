@@ -85,6 +85,7 @@ def ov_countries_affected_indicator(df,in_str='Countries'):
     if(in_str == 'Cities'): 
         col = "City"
         _title='Cities'
+    df = df[df[col] != 'Unknown']
     num_countries_affected = df[col].nunique()
     fig = go.Figure()
     fig.add_trace(go.Indicator(
@@ -557,6 +558,8 @@ def BuildGetAttackLayout(filtered_df,template):
     ]
 
 
+
+#####################################################################################Build Geo page
 def first_non_null(series):
     return series.dropna().iloc[0] if not series.dropna().empty else None
 
@@ -572,19 +575,85 @@ def geo_attacks_map(df, template):
     fig = px.scatter_geo(merged_df, lat='Latitude',lon='Longitude', color="casualties",
                         hover_name="SubRegion", size="attacks",
                         animation_frame="Year",
-                        projection="natural earth",title="Attacks by Location")
+                        projection="natural earth",title="Attacks by Location over Time")
 
     fig.update_layout(
         autosize=False,
         template=template,
-        margin={"r": 0, "t": 30, "l": 0, "b": 0}
+        margin={"r": 0, "t": 40, "l": 0, "b": 0}
     )
 
     return fig
-#####################################################################################Build Geo page
+
+def geo_bar_plots(df,template,in_str):
+    _title = ''
+    _col = ''
+    if(in_str == 'Countries'):
+        _title = 'Top 5 Countries'
+        _col = 'Country'
+    if(in_str == 'Regions'):
+        _title = 'Top 5 Regions'
+        _col = 'SubRegion'
+    if(in_str == 'Cities'):
+        _title = 'Top 5 Cities'
+        _col = 'City'
+    
+    _df = df.copy()
+    _df[_col] = _df[_col].astype(str)
+    _df = _df[_df[_col] != 'Unknown']
+    _df['Country'] = _df['Country'].astype(str)
+    if(in_str != 'Countries'):
+        _df[_col]=_df[_col] + ', ' + _df['Country']
+    
+    top_5_df = _df.groupby(_col).size().reset_index(name='Attacks').sort_values(by='Attacks',
+                                                                                           ascending=False).head(5)
+    #only inlcude the top 5
+    fig = px.bar(top_5_df, y=_col, x='Attacks',
+                 title=_title,color_discrete_sequence=[t_green],
+                template=template) 
+    fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''),
+                      margin={"r":5,"t":40,"l":0,"b":5}
+                      )
+    return fig
+
+def geo_Treemap(df,template): #highest casualties SubRegions
+    _df = df.copy()
+    _df = _df[_df['SubRegion']!= 'Unknown']
+    _df['SubRegion'] = _df['SubRegion'].astype(str)
+    _df['Country'] = _df['Country'].astype(str)
+    _df['SubRegion'] = _df['SubRegion'] + ', ' + _df['Country']
+    top_5_df = _df.groupby('SubRegion').agg({'Casualties': 'sum', 'EventID': 'count'}).reset_index()
+    top_5_df.columns = ['SubRegion', 'Casualties', 'EventID']
+    top_5_df = top_5_df.sort_values(by='EventID', ascending=False).head(5)
+    top_5_df = top_5_df[top_5_df['EventID']>0]
+    top_5_df['Attacks'] = top_5_df['EventID']
+    #GROUPED_DF has columns : TargetType,AttackType,Casualties,NumOccurences
+    fig = px.treemap(top_5_df, path=[px.Constant("Top 5 Regions"), 'SubRegion'], values='Attacks',
+                  color='Casualties',
+                  #color_continuous_scale='RdBu',#'Viridis',#
+                  color_continuous_midpoint=np.average(top_5_df['Casualties'], weights=top_5_df['Attacks']))
+    fig.update_layout(margin = dict(t=50, l=25, r=25, b=25),template=template,title='Top 5 Regions: Attacks and Casualties')
+    return fig   
+
+def geo_region_spread(df, template):
+    #Todo can do this with one dataset
+    df_summed = df.groupby('Year').agg({'SubRegion': 'nunique'}).reset_index()
+    df_summed['Regions Attacked'] = df_summed['SubRegion']
+
+    fig_line = px.line(df_summed, x='Year', y=['Regions Attacked'],
+                       labels={'value': 'Regions Attacked', 'variable': 'Type'},
+                       
+                       title='Geographic Spread', color_discrete_sequence=[t_light_green],
+                       template=template)
+
+    fig_line.update_layout(template=template, margin={"r": 5, "t": 40, "l": 5, "b": 5},showlegend=False,xaxis_title=None,)
+    return fig_line
+
 def BuildGetGeoLayout(filtered_df,template):
     row_marg ='25px'
-    ind_height = '125px'
+    ind_height = '90px'
+    bar_height = '150px'
+    map_height = '500px'
     return [
         dbc.Row([
             dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df,in_str='Countries'), style={'height': ind_height}),width=4),
@@ -593,7 +662,18 @@ def BuildGetGeoLayout(filtered_df,template):
         ], style={'margin-top': row_marg}),
 
         dbc.Row([ 
-            dbc.Col(dcc.Graph(figure=geo_attacks_map(filtered_df,template), style={'height': '500px'}),width=8),
+            dbc.Col(dcc.Graph(figure=geo_bar_plots(filtered_df,template,in_str='Countries'), style={'height': bar_height}),width=4),
+            dbc.Col(dcc.Graph(figure=geo_bar_plots(filtered_df,template,in_str='Regions'), style={'height': bar_height}),width=4),
+            dbc.Col(dcc.Graph(figure=geo_bar_plots(filtered_df,template,in_str='Cities'), style={'height': bar_height}),width=4),
+        ], style={'margin-top': row_marg}),
+
+        dbc.Row([ 
+            dbc.Col(dcc.Graph(figure=geo_region_spread(filtered_df,template), style={'height': '120px'}),width=12),
+        ], style={'margin-top': row_marg}),
+
+        dbc.Row([ 
+            dbc.Col(dcc.Graph(figure=geo_attacks_map(filtered_df,template), style={'height': map_height}),width=8),
+            dbc.Col(dcc.Graph(figure=geo_Treemap(filtered_df,template), style={'height': map_height}),width=4),
         ], style={'margin-top': row_marg}),
         dbc.Row([
             dbc.Col(html.A("Data Sourced from the GTD Dataset (START, University of Maryland)", href="https://www.start.umd.edu/gtd/"), width=12),
