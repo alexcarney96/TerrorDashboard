@@ -74,13 +74,23 @@ def ov_victims_wounded_indicator(df):
     ))
     return fig
 
-def ov_countries_affected_indicator(df):
-    num_countries_affected = df['Country'].nunique()
+def ov_countries_affected_indicator(df,in_str='Countries'):
+    col,_title = '',''
+    if(in_str == 'Countries'): 
+        col = "Country"
+        _title='Countries'
+    if(in_str == 'Regions'): 
+        col = "SubRegion"
+        _title='Regions'
+    if(in_str == 'Cities'): 
+        col = "City"
+        _title='Cities'
+    num_countries_affected = df[col].nunique()
     fig = go.Figure()
     fig.add_trace(go.Indicator(
         mode="number",
         value=num_countries_affected,
-        title={"text": "Countries", 'font': {'size': 26}},
+        title={"text": _title, 'font': {'size': 26}},
         number={'font': {'size': 24}, 'font_color' : t_green}
     ))
 
@@ -100,7 +110,7 @@ def ov_victims_killed_indicator(df):
 
 
 def ov_kill_wounded(df, template):
-    # Todo can do this with one dataset
+    #Todo can do this with one dataset
     df_summed = df.groupby('Year').agg({'NVictimsWounded': 'sum', 'NVictimsKilled': 'sum'}).reset_index()
     df_attacks = df.groupby('Year').size().reset_index(name='Attacks')
 
@@ -127,17 +137,14 @@ def ov_kill_wounded(df, template):
     return subplot
 
 def line_polar_attack_types(df,template):
-    # Melt the DataFrame
     df_melted = pd.melt(df, value_vars=['AttackType1', 'AttackType2', 'AttackType3'],
                         var_name='AttackType', value_name='AttackTypeValue')
 
-    # Drop rows with NaN values
     df_melted = df_melted.dropna(subset=['AttackTypeValue'])
     grp = df_melted.groupby("AttackTypeValue").size().reset_index(name="frequency")
 
     grp  = grp[grp['AttackTypeValue'] != 'Unknown']
 
-    # Create the line polar plot
     fig = px.line_polar(grp, r="frequency",theta='AttackTypeValue',
                         line_close=True,
                         title = 'Attack Method',
@@ -151,7 +158,6 @@ def line_polar_attack_types(df,template):
     return fig
 
 def ov_attack_success_gauge(df, template):
-    # Calculate attack success rate (assuming 'AttackSuccess' is a column in the DataFrame)
     success_rate = (df['AttackSuccess'].sum() / len(df)) * 100
 
     fig = go.Figure(go.Indicator(
@@ -171,11 +177,9 @@ def ov_attack_success_gauge(df, template):
     return fig
 
 def ov_targetTypeBar(df,template):
-    # Melt the DataFrame
     df_melted = pd.melt(df, value_vars=['TargetType1', 'TargetType2', 'TargetType3'],
                         var_name='TargTypeCol', value_name='TargTypeValue')
 
-    # Drop rows with NaN values
     df_melted = df_melted.dropna(subset=['TargTypeValue'])
     grp = df_melted.groupby("TargTypeValue").size().reset_index(name="frequency")
     top_targets = grp.sort_values(by='frequency', ascending=False).head(5)
@@ -188,22 +192,16 @@ def ov_targetTypeBar(df,template):
     return fig
 
 def ov_attacks_by_country_choropleth(df, template):
-
-
-    # Calculate the attack count by country
     attacks_df = df.groupby("Country").size().reset_index(name="attacks")
     attacks_df = attacks_df[attacks_df['attacks'] > 0]
 
-    # Calculate the sum of killed and wounded by country
     victims_df = df.groupby("Country").agg({
         'NVictimsKilled': 'sum',
         'NVictimsWounded': 'sum'
     }).reset_index()
 
-    # Merge the two dataframes on 'Country'
     grouped_df = attacks_df.merge(victims_df, on='Country', how='left')
 
-    # Create a choropleth map
     fig = px.choropleth(grouped_df,
                         locations='Country',
                         locationmode='country names',
@@ -250,6 +248,9 @@ def BuildGetOverviewLayout(filtered_df,template):
                 ],width=4),
             
             
+        ], style={'margin-top': row_marg}),
+        dbc.Row([
+            dbc.Col(html.A("Data Sourced from the GTD Dataset (START, University of Maryland)", href="https://www.start.umd.edu/gtd/"), width=12),
         ], style={'margin-top': row_marg}),
     ]
 
@@ -298,13 +299,9 @@ def at_area_chart_tabs(filtered_df,template,height):
         dbc.Tab(label='Target Selection Evolution',tab_id='Target',active_label_style={'color' : t_green}, children=[
             dcc.Graph(figure=at_area_chart(filtered_df, template,'Target'),style={'height': height})
         ]),
-        #dbc.Tab(label='Weapon Usage Evolution',tab_id='Weapon',active_label_style={'color' : t_green}, children=[
-        #    dcc.Graph(figure=at_area_chart(filtered_df, template,'Weapon'),style={'height': height})
-        #]), 
     ],active_tab='Attack')
 
 def at_sui_attack_gauge(df, template):
-    # Calculate attack success rate (assuming 'AttackSuccess' is a column in the DataFrame)
     success_rate = (df['SuicideAttack'].sum() / len(df)) * 100
 
     fig = go.Figure(go.Indicator(
@@ -341,7 +338,6 @@ def at_cas_stacked_bar_chart(filtered_df, template):
     df_summed = df_summed[df_summed['AttackType'].isin(top_5)]
     df_summed = df_summed[(df_summed['NVictimsKilled'] > 0) | (df_summed['NVictimsWounded'] > 0)]
 
-    #percentage of killed and wounded relative to total casualties
     df_summed['PercentKilled'] = (df_summed['NVictimsKilled'] / (df_summed['NVictimsKilled']+df_summed['NVictimsWounded'])) * 100
     df_summed['PercentWounded'] = (df_summed['NVictimsWounded'] / (df_summed['NVictimsKilled']+df_summed['NVictimsWounded'])) * 100
 
@@ -412,7 +408,6 @@ def at_kpa_wpa_indicator(df,k_or_a):
     fig.add_trace(go.Indicator(
         mode="number",
         value=rounded_average_killed_per_attack,
-        #number=dict(suffix='%'),
         title={"text": _title, 'font': {'size': 20}},
         number={'font': {'size': 20}, 'font_color' : t_green}
     ))
@@ -440,7 +435,7 @@ def at_treemap(df,template):
 
 
 def at_treemap_helper(df,in_str):
-    #just melts
+    #just melts on commmon stuff
     val_vars,var_nm,value_nm = [],'',''
     if (in_str == 'AttackType'): 
         val_vars = ['AttackType1', 'AttackType2', 'AttackType3']
@@ -458,13 +453,9 @@ def at_treemap_helper(df,in_str):
     
 
 def at_TreeMap(df,template):
-    '''
-    px.Constant(Targets)v
-    TargetType, AttackType,NumEvents|Casualties values=Numevents, colored by Casualties (merged on eventid)
-    '''
     #TARG_DF cols : TargetType, EventID, Casualties
     #ATT_DF cols : AttackType, EventID, Casualties
-    targ_df = at_treemap_helper(df,'TargetType')# 
+    targ_df = at_treemap_helper(df,'TargetType')
     att_df = at_treemap_helper(df,'AttackType')
     targ_df = targ_df[targ_df['TargetType'] != 'Unknown']
     targ_df = targ_df[targ_df['TargetType'] != 'Other']
@@ -480,7 +471,7 @@ def at_TreeMap(df,template):
     #join on the attack data
     merged_df = pd.merge(targ_df, att_df[['EventID', 'AttackType']], on='EventID', how='left')
     merged_df['Casualties'] = merged_df['Casualties'].fillna(0)
-    #MERGED_DF : EventID, TargetType, AttackType, Casualties
+
     grouped_df = merged_df.groupby(['TargetType', 'AttackType']).agg({
     'Casualties': 'sum',
     'EventID': 'count'
@@ -491,7 +482,7 @@ def at_TreeMap(df,template):
     #GROUPED_DF has columns : TargetType,AttackType,Casualties,NumOccurences
     fig = px.treemap(grouped_df, path=[px.Constant("Top 5 Targets"), 'TargetType', 'AttackType'], values='Attacks',
                   color='Casualties',
-                  color_continuous_scale='Viridis',#'Viridis',#'RdBu',
+                  #color_continuous_scale='RdBu',#'Viridis',#
                   color_continuous_midpoint=np.average(grouped_df['Casualties'], weights=grouped_df['Attacks']))
     fig.update_layout(margin = dict(t=50, l=25, r=25, b=25),template=template,title='Attack Profile of Top 5 Targets')
     return fig   
@@ -560,21 +551,53 @@ def BuildGetAttackLayout(filtered_df,template):
             dbc.Col(dcc.Graph(figure=at_TreeMap(filtered_df,template), style={'height': '400px'}),width=12),
             
         ], style={'margin-top': row_marg}),
-
+        dbc.Row([
+            dbc.Col(html.A("Data Sourced from the GTD Dataset (START, University of Maryland)", href="https://www.start.umd.edu/gtd/"), width=12),
+        ], style={'margin-top': row_marg}),
     ]
 
 
+def first_non_null(series):
+    return series.dropna().iloc[0] if not series.dropna().empty else None
 
+def geo_attacks_map(df, template):
+    attacks_df = df.groupby(['Year',"SubRegion"]).agg(attacks=('Casualties', 'size'), casualties=('Casualties', 'sum')).reset_index()
+    attacks_df = attacks_df[attacks_df['attacks'] > 0]
+    attacks_df = attacks_df.dropna()
 
+    locs_df = df.groupby(['Year', 'SubRegion']).agg({'Latitude': first_non_null, 'Longitude': first_non_null}).reset_index()
+    merged_df = pd.merge(attacks_df, locs_df, on=['Year', 'SubRegion'], how='left')
+    merged_df = merged_df.dropna()
+    merged_df = merged_df[merged_df['attacks'] > 0]
+    fig = px.scatter_geo(merged_df, lat='Latitude',lon='Longitude', color="casualties",
+                        hover_name="SubRegion", size="attacks",
+                        animation_frame="Year",
+                        projection="natural earth",title="Attacks by Location")
+
+    fig.update_layout(
+        autosize=False,
+        template=template,
+        margin={"r": 0, "t": 30, "l": 0, "b": 0}
+    )
+
+    return fig
 #####################################################################################Build Geo page
 def BuildGetGeoLayout(filtered_df,template):
     row_marg ='25px'
+    ind_height = '125px'
     return [
-        dbc.Row([ 
-            #dbc.Col(dcc.Graph(figure=ov_stacked_area_chart_casualties2(filtered_df,template), style={'height': '250px'}),width=9),
-            dbc.Col(dcc.Graph(figure=ov_attack_success_gauge(filtered_df, template), style={'height': '250px'}),width=3),
+        dbc.Row([
+            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df,in_str='Countries'), style={'height': ind_height}),width=4),
+            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df,in_str='Regions'), style={'height': ind_height}),width=4),
+            dbc.Col(dcc.Graph(figure=ov_countries_affected_indicator(filtered_df,in_str='Cities'), style={'height': ind_height}),width=4),
         ], style={'margin-top': row_marg}),
 
+        dbc.Row([ 
+            dbc.Col(dcc.Graph(figure=geo_attacks_map(filtered_df,template), style={'height': '500px'}),width=8),
+        ], style={'margin-top': row_marg}),
+        dbc.Row([
+            dbc.Col(html.A("Data Sourced from the GTD Dataset (START, University of Maryland)", href="https://www.start.umd.edu/gtd/"), width=12),
+        ], style={'margin-top': row_marg}),
     ]
 
 
@@ -584,7 +607,7 @@ navbar = dbc.NavbarSimple(
         dcc.Dropdown(
             id='group-dropdown',
             options=[{'label': group, 'value': group} for group in raw_df.index.unique()],
-            value=raw_df.index.unique()[0],  # Default to the first value
+            value=raw_df.index.unique()[0],
             style={'width': '400px'}
         ),
         dbc.NavItem(dbc.NavLink("Group Overview", href="/overview", active=True, id='overview-link')),
@@ -595,13 +618,13 @@ navbar = dbc.NavbarSimple(
     brand_href="/overview",
     color="dark",
     dark=True,
-    style={'borderBottom': '1px solid white'}  # Add a border to the bottom of the navbar
+    style={'borderBottom': '1px solid white'}
 )
 
 ######################################################################################## Page layout
 app.layout = dbc.Container(
     [
-        dcc.Location(id='url', refresh=False, pathname='/overview'),  # Set default page to "/overview"
+        dcc.Location(id='url', refresh=False, pathname='/overview'),
         navbar,
         html.Div(id='page-content')
     ],
