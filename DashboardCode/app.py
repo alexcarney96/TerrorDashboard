@@ -146,6 +146,7 @@ def line_polar_attack_types(df,template):
 
     grp  = grp[grp['AttackTypeValue'] != 'Unknown']
 
+    grp = grp.sort_values(by='frequency',ascending=False).head(5)
     fig = px.line_polar(grp, r="frequency",theta='AttackTypeValue',
                         line_close=True,
                         title = 'Attack Method',
