@@ -581,7 +581,7 @@ def geo_attacks_map(df, template):
     fig.update_layout(
         autosize=False,
         template=template,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0}
+        margin={"r": 5,"t": 40, "l": 5, "b": 5}
     )
 
     return fig
@@ -669,13 +669,17 @@ def BuildGetGeoLayout(filtered_df,template):
         ], style={'margin-top': row_marg}),
 
         dbc.Row([ 
-            dbc.Col(dcc.Graph(figure=geo_region_spread(filtered_df,template), style={'height': '120px'}),width=12),
+            dbc.Col(dcc.Graph(figure=geo_region_spread(filtered_df,template), style={'height': '150px'}),width=12),
         ], style={'margin-top': row_marg}),
 
         dbc.Row([ 
-            dbc.Col(dcc.Graph(figure=geo_attacks_map(filtered_df,template), style={'height': map_height}),width=8),
-            dbc.Col(dcc.Graph(figure=geo_Treemap(filtered_df,template), style={'height': map_height}),width=4),
+            dbc.Col(dcc.Graph(figure=geo_attacks_map(filtered_df,template), style={'height': map_height}),width=7),
+            dbc.Col(dcc.Graph(figure=geo_Treemap(filtered_df,template), style={'height': map_height}),width=5),
         ], style={'margin-top': row_marg}),
+
+
+
+
         dbc.Row([
             dbc.Col(html.A("Data Sourced from the GTD Dataset (START, University of Maryland)", href="https://www.start.umd.edu/gtd/"), width=12),
         ], style={'margin-top': row_marg}),
@@ -709,7 +713,7 @@ app.layout = dbc.Container(
         navbar,
         html.Div(id='page-content')
     ],
-    fluid=False,className="dbc"
+    fluid=True,className="dbc"
 )
 
 ########################################### Callback to update page content based on URL and dropdown value
