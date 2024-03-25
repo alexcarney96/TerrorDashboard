@@ -183,9 +183,9 @@ def ov_targetTypeBar(df,template):
                         var_name='TargTypeCol', value_name='TargTypeValue')
 
     df_melted = df_melted.dropna(subset=['TargTypeValue'])
-    grp = df_melted.groupby("TargTypeValue").size().reset_index(name="frequency")
-    top_targets = grp.sort_values(by='frequency', ascending=False).head(5)
-    fig = px.bar(top_targets, x='frequency', y='TargTypeValue',
+    grp = df_melted.groupby("TargTypeValue").size().reset_index(name="Frequency")
+    top_targets = grp.sort_values(by='Frequency', ascending=False).head(5)
+    fig = px.bar(top_targets, x='Frequency', y='TargTypeValue',
                  title='Top 5 Target Types',color_discrete_sequence=[t_green],
                 template=template) 
     fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''),
@@ -565,7 +565,7 @@ def first_non_null(series):
     return series.dropna().iloc[0] if not series.dropna().empty else None
 
 def geo_attacks_map(df, template):
-    attacks_df = df.groupby(['Year',"SubRegion"]).agg(attacks=('Casualties', 'size'), casualties=('Casualties', 'sum')).reset_index()
+    attacks_df = df.groupby(['Year',"SubRegion"]).agg(attacks=('Casualties', 'size'), Casualties=('Casualties', 'sum')).reset_index()
     attacks_df = attacks_df[attacks_df['attacks'] > 0]
     attacks_df = attacks_df.dropna()
 
@@ -573,7 +573,7 @@ def geo_attacks_map(df, template):
     merged_df = pd.merge(attacks_df, locs_df, on=['Year', 'SubRegion'], how='left')
     merged_df = merged_df.dropna()
     merged_df = merged_df[merged_df['attacks'] > 0]
-    fig = px.scatter_geo(merged_df, lat='Latitude',lon='Longitude', color="casualties",
+    fig = px.scatter_geo(merged_df, lat='Latitude',lon='Longitude', color="Casualties",
                         hover_name="SubRegion", size="attacks",
                         animation_frame="Year",
                         projection="natural earth",title="Attacks by Location Over Time")
@@ -611,7 +611,8 @@ def geo_bar_plots(df,template,in_str):
     #only inlcude the top 5
     fig = px.bar(top_5_df, y=_col, x='Attacks',
                  title=_title,color_discrete_sequence=[t_green],
-                template=template) 
+                template=template)
+    fig.update_traces(text=top_5_df['Attacks'], textposition='outside') 
     fig.update_layout(yaxis_categoryorder='total ascending',yaxis=dict(title=''),
                       margin={"r":5,"t":40,"l":0,"b":5}
                       )
