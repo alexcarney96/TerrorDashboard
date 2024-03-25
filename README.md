@@ -26,7 +26,7 @@ together a holistic understanding of a perpetrator group.
 4. **Transform the data**: 
    Open `ETL.py` and replace `gtd_fpath` with the relative or absolute path to the `globalterrorismdb_0522dist.xlsx` you downloaded from the GTD website and run the `ETL.py` script.
 
-5. **Build the Docker Image**: 
+5. **Build and Launch the Docker Container**: 
    The raw dataset has been transformed and is now placed in the `DashboardCode` repository. Now, we will build the docker container, launch it, and visit the dashboard.
 
    ```bash
