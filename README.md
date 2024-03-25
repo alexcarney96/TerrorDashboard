@@ -38,11 +38,11 @@ together a holistic understanding of a perpetrator group.
 
 ## Usage
 
-Instructions on how to use the project or its features.
+Once the docker container is deployed, the web dashboard application can be visited in the web browser. Data pertaining to notable terror groups can be explored via the interactive Plotly visualizations.
 
 ## Contributing
 
-Guidelines for contributing to the project. Include information on how to report bugs, suggest enhancements, or submit pull requests.
+Contributions are not being accepted at this time.
 
 ## License
 
