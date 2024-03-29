@@ -1,6 +1,7 @@
 # Global Terrorism Perpetrators Dashboard
 
 ## Overview
+[![DOI](https://zenodo.org/badge/760935148.svg)](https://zenodo.org/doi/10.5281/zenodo.10895522)
 
 The Global Terrorism Database (GTD), maintained by the University of 
 Maryland, collects detailed data regarding terror events worldwide. The 
